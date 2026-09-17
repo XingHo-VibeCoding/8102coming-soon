@@ -1,0 +1,37 @@
+# ===== 机密与凭据（永远不上传）=====
+.env
+.env.*
+*.env
+*.key
+*.pem
+*.p12
+*.pfx
+secrets.*
+credentials.*
+*密码*
+*secret*
+token.txt
+config-private.json
+
+# ===== 依赖目录 =====
+node_modules/
+bower_components/
+
+# ===== 本地数据库文件 =====
+*.db
+*.sqlite
+*.sqlite3
+*.mdb
+
+# ===== 日志与缓存 =====
+*.log
+npm-debug.log*
+.cache/
+dist/
+build/
+
+# ===== 系统与编辑器杂物 =====
+.DS_Store
+Thumbs.db
+desktop.ini
+~$*
