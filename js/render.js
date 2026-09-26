@@ -48,10 +48,32 @@ const Render = {
     `;
   },
 
-  /** 系列详情页：世界观简介 + 该系列全部歌曲（PRD F2 / B3） */
+  /** 系列详情页：世界观简介 + 该系列全部歌曲（PRD F2 / B3）。
+   *  若系列定义了 chapters（如妄想症的序曲/坠落之章/上升之章），按章节分组展示。 */
   seriesPage(data) {
     if (!data) return Render.notFoundPage();
-    const cards = data.songs.map(songCard).join("");
+
+    const byId = {};
+    data.songs.forEach((s) => (byId[s.id] = s));
+
+    let body;
+    if (data.chapters) {
+      // 章节分组：标题下按章节小标题陈列各章歌曲
+      body = data.chapters
+        .map((ch) => {
+          const songs = ch.songIds.map((id) => byId[id]).filter(Boolean);
+          if (songs.length === 0) return "";
+          return `
+          <section class="chapter-block">
+            <h2 class="section-title">${escapeHtml(ch.name)}</h2>
+            <div class="card-list">${songs.map(songCard).join("")}</div>
+          </section>`;
+        })
+        .join("");
+    } else {
+      body = `<section class="card-list">${data.songs.map(songCard).join("")}</section>`;
+    }
+
     return `
       <main class="home-page">
         <header class="home-header">
@@ -60,7 +82,7 @@ const Render = {
           <div class="song-badges"><span class="badge">${data.songCount} 首</span></div>
           <p class="series-back"><a class="btn" href="#/">← 返回首页</a></p>
         </header>
-        <section class="card-list">${cards}</section>
+        ${body}
         <footer class="page-footer">🎵 中V歌曲故事 · 由 vibe coding 学习营 · 世末歌者工作室出品</footer>
       </main>
     `;

@@ -440,6 +440,14 @@ body {
   margin: 20px 0 4px;
 }
 
+.chapter-block {
+  margin-top: 36px;
+}
+
+.chapter-block .section-title {
+  text-align: left;
+}
+
 /* ---------- 页脚 / 兜底页 ---------- */
 
 .page-footer {
