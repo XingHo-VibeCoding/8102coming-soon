@@ -161,6 +161,41 @@ const Render = {
     `;
   },
 
+  /** 关于页：项目介绍 + 数据来源与纠错机制说明（框架 B 新增） */
+  aboutPage() {
+    const seriesCount = Store.getAllSeries().length;
+    const songCount = Store.getAllSongs().length;
+    return `
+      <main class="home-page about-page">
+        <header class="home-header">
+          <h1 class="home-title">关于本站</h1>
+          <p class="home-sub">把中V歌曲蕴含的故事，做成一页页看得见的漫画。</p>
+        </header>
+        <section class="about-block reveal">
+          <h2 class="section-title">🎵 这是什么</h2>
+          <p>「中V歌曲故事」把中文 VOCALOID 歌曲背后的故事，改编成漫画分镜式的可视化页面——每首歌一页漫剧，逐格读完一个故事。目前收录 ${songCount} 首歌曲、${seriesCount} 个系列。</p>
+          <p>纯静态网站：无后端、无登录、无任何需要密钥的服务，部署在 GitHub Pages 上。</p>
+        </section>
+        <section class="about-block reveal">
+          <h2 class="section-title">📖 内容是怎么来的</h2>
+          <p>歌曲数据（曲名、分镜旁白、里程碑、简介）由 AI 依据公开资料（B站投稿信息、萌娘百科等）<strong>起草代录、免审入库</strong>；每条数据在源码中标注来源链接与录入日期。资料之间有冲突时，以 B站投稿信息为准。</p>
+          <p><strong>纠错机制</strong>：任何人任何时候发现资料错误（数字、日期、剧情描述等），向站长指出即立即修正，纠错不设时限、不设次数。</p>
+          <p>「💙 我的故事」栏目是站长的私人感想，AI 不代写，由站长亲自撰写补入。</p>
+        </section>
+        <section class="about-block reveal">
+          <h2 class="section-title">🎨 关于配图</h2>
+          <p>画格配图均为 AI 原创生成，不使用任何官方曲绘或 PV 截图；未配图的画格以色块排版呈现，故事依然完整可读。</p>
+        </section>
+        <section class="about-block reveal">
+          <h2 class="section-title">🖥️ 技术构成</h2>
+          <p>纯 HTML / CSS / JavaScript，hash 路由无刷新切换页面；数据只有一个文件（data.js），增删歌曲不需要改动页面代码。</p>
+          <p>源码仓库：<a class="about-link" href="https://github.com/XingHo-VibeCoding/8102coming-soon" target="_blank" rel="noopener noreferrer">XingHo-VibeCoding/8102coming-soon</a></p>
+        </section>
+        <footer class="page-footer">🎵 中V歌曲故事 · 由 vibe coding 学习营 · 世末歌者工作室出品</footer>
+      </main>
+    `;
+  },
+
   /** 路由兜底：找不到歌曲/页面时（TECH_DESIGN §6） */
   notFoundPage() {
     const quickLinks = Store.getAllSongs()

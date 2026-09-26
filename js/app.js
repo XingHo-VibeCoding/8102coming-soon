@@ -4,6 +4,7 @@
 //   #/              → 首页卡片列表 + 系列区块（PRD F1 + F2）
 //   #/song/{id}     → 漫剧页（PRD F3）
 //   #/series/{id}   → 系列详情页（PRD F2）
+//   #/about         → 关于页（框架 B 新增）
 // ============================================================
 
 function route() {
@@ -16,7 +17,17 @@ function route() {
     console.error("[app] 页面渲染出错，已降级到兜底页：", err);
     app.innerHTML = Render.notFoundPage();
   }
+  setActiveNav();
   setupRevealAnimation();
+}
+
+/** 导航栏当前页高亮（框架 B）：song/series 归入「首页」高亮 */
+function setActiveNav() {
+  const hash = location.hash || "#/";
+  const current = hash.startsWith("#/about") ? "about" : "home";
+  document.querySelectorAll(".nav-link").forEach((a) => {
+    a.classList.toggle("active", a.dataset.route === current);
+  });
 }
 
 function renderRoute(app) {
@@ -31,6 +42,8 @@ function renderRoute(app) {
       : Render.notFoundPage(); // 错 hash 兜底（TECH_DESIGN §6）
   } else if (seriesMatch) {
     app.innerHTML = Render.seriesPage(Store.getSeriesById(seriesMatch[1]));
+  } else if (hash === "#/about") {
+    app.innerHTML = Render.aboutPage();
   } else if (hash === "#/" || hash === "#" || hash === "") {
     const songs = Store.getAllSongs();
     app.innerHTML = songs.length
