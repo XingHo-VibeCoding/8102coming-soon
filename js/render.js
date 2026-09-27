@@ -6,22 +6,29 @@
 // ============================================================
 
 const Render = {
-  /** 首页：歌曲卡片列表 + 系列区块（PRD F1 + F2） */
-  homePage(songs) {
-    const cards = songs.map(songCard).join("");
-
-    const seriesCards = Store.getAllSeries()
-      .map(
-        (s) => `
-        <a class="series-card reveal" href="#/series/${escapeHtml(s.id)}">
-          <div class="series-head">
-            <h3 class="series-name">📚 ${escapeHtml(s.name)}</h3>
-            <span class="badge">${s.songCount} 首</span>
-          </div>
-          <p class="series-intro">${escapeHtml(s.intro)}</p>
-        </a>`
-      )
-      .join("");
+  /**
+   * 首页（PRD F1 改版）：三种页面级状态——loading / success / error。
+   * success 时按三区块组织：🔥 热度榜 / 🎵 全部歌曲（含搜索+空状态）/ 📚 系列曲。
+   * 空状态在区块 2 内部（搜索无匹配，不清屏）。
+   */
+  homePage(status) {
+    let content;
+    if (status === "loading") {
+      content = Render.homeSkeleton();
+    } else if (status === "error") {
+      content = Render.homeError();
+    } else {
+      content = `
+        ${Render.hotList(Store.getHotSongs(3))}
+        <section class="all-songs-section">
+          <h2 class="section-title">🎵 全部歌曲</h2>
+          <div class="card-list" id="card-list">${Store.getAllSongs().map(songCard).join("")}</div>
+        </section>
+        <section class="series-section reveal">
+          <h2 class="section-title">📚 系列曲</h2>
+          <div class="series-list">${Render.seriesCards()}</div>
+        </section>`;
+    }
 
     return `
       <main class="home-page">
@@ -35,17 +42,74 @@ const Render = {
               type="search"
               placeholder="搜索曲名 / 虚拟歌手 / 系列名…"
               autocomplete="off"
+              ${status !== "success" ? "disabled" : ""}
             />
           </div>
         </header>
-        <section class="card-list" id="card-list">${cards}</section>
-        <section class="series-section reveal">
-          <h2 class="section-title">📚 系列曲</h2>
-          <div class="series-list">${seriesCards}</div>
-        </section>
+        <div id="home-content">${content}</div>
         <footer class="page-footer">🎵 中V歌曲故事 · 由 vibe coding 学习营 · 世末歌者工作室出品</footer>
       </main>
     `;
+  },
+
+  /** 区块 1 🔥 热度榜：Top N，播放数为公开快照值（来源见 data.js heat 字段） */
+  hotList(songs) {
+    if (!songs.length) return ""; // 无可靠数据时不渲染榜单，不编造
+    const medals = ["🥇", "🥈", "🥉"];
+    const rows = songs
+      .map((song, i) => {
+        const h = song.heat;
+        return `
+        <a class="hot-row reveal" href="#/song/${escapeHtml(song.id)}">
+          <span class="hot-rank">${medals[i] || i + 1}</span>
+          <span class="hot-info">
+            <span class="hot-title">${escapeHtml(song.title)}</span>
+            <span class="hot-sub">${escapeHtml(song.singer)}</span>
+          </span>
+          <span class="hot-plays">
+            <span class="hot-num">${h.plays} 万</span>
+            <span class="hot-asof">播放快照 · ${escapeHtml(h.asOf)}</span>
+          </span>
+        </a>`;
+      })
+      .join("");
+    return `
+      <section class="hot-section">
+        <h2 class="section-title">🔥 热度榜</h2>
+        <div class="hot-list">${rows}</div>
+        <p class="hot-note">播放数为公开快照值（来源见各曲数据）；无可靠数字的歌曲不参与排名。</p>
+      </section>`;
+  },
+
+  /** 系列区块卡片（首页区块 3）——复用下方 seriesCard 组件 */
+  seriesCards() {
+    return Store.getAllSeries().map(seriesCard).join("");
+  },
+
+  /** 加载中状态：骨架屏（本地数据同步加载，此态仅短暂展示） */
+  homeSkeleton() {
+    const bar = (w) => `<span class="sk-bar" style="width:${w}%"></span>`;
+    const skCard = `
+      <div class="sk-card">
+        <div class="sk-row">${bar(45)}${bar(20)}</div>
+        ${bar(85)}${bar(60)}
+      </div>`;
+    return `
+      <div class="home-skeleton" aria-busy="true" aria-label="加载中">
+        <div class="sk-hot">${skCard}</div>
+        ${skCard}${skCard}
+      </div>`;
+  },
+
+  /** 错误状态：数据层异常/为空时的兜底面板（不白屏，可重试） */
+  homeError() {
+    return `
+      <div class="error-state" role="alert">
+        <p class="error-emoji">🌧️</p>
+        <p class="error-text">数据加载失败了——雨太大，把数据冲走了。</p>
+        <p class="error-hint">点击下面的按钮重试；若反复失败，请到仓库提交 issue 告诉站长。</p>
+        <button class="btn" type="button" onclick="route()">重试</button>
+      </div>`;
   },
 
   /** 系列详情页：世界观简介 + 该系列全部歌曲（PRD F2 / B3）。
@@ -222,7 +286,30 @@ function escapeHtml(str) {
     .replace(/"/g, "&quot;");
 }
 
-/** 歌曲卡片（首页与系列页共用，PRD B3「复用卡片样式」）；系列标签可点击跳系列页（B4） */
+/**
+ * 【可复用组件】系列卡片（余力加练 · Day 8）
+ * 输入：Store.getAllSeries() 的一条元素（须含 id/name/intro/songCount）
+ * 输出：整卡可点的 HTML 字符串，跳转对应系列详情页
+ * 使用处：首页系列区块（区块3）；新页面陈列系列时同样 map(seriesCard) 即可。
+ */
+function seriesCard(s) {
+  return `
+    <a class="series-card reveal" href="#/series/${escapeHtml(s.id)}">
+      <div class="series-head">
+        <h3 class="series-name">📚 ${escapeHtml(s.name)}</h3>
+        <span class="badge">${s.songCount} 首</span>
+      </div>
+      <p class="series-intro">${escapeHtml(s.intro)}</p>
+    </a>`;
+}
+
+/**
+ * 【可复用组件】歌曲卡片（余力加练 · Day 8）
+ * 输入：一条歌曲数据对象（data.js 的 SONGS 元素）
+ * 输出：整卡可点的 HTML 字符串；系列标签自带反向跳转（B4）
+ * 使用处：首页全部歌曲（区块2）、系列详情页、搜索结果列表
+ * 新页面想陈列歌曲时，直接 songs.map(songCard).join("") 即可。
+ */
 function songCard(song) {
   const series = song.seriesId
     ? SERIES.find((s) => s.id === song.seriesId)

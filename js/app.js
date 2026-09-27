@@ -45,16 +45,47 @@ function renderRoute(app) {
   } else if (hash === "#/about") {
     app.innerHTML = Render.aboutPage();
   } else if (hash === "#/" || hash === "#" || hash === "") {
-    const songs = Store.getAllSongs();
-    app.innerHTML = songs.length
-      ? Render.homePage(songs)
-      : Render.notFoundPage();
-    setupSearch();
+    renderHome(app);
   } else {
     app.innerHTML = Render.notFoundPage();
   }
 
   setupRevealAnimation();
+}
+
+/**
+ * 首页状态机（PRD F1 改版）：加载中 → 成功 / 错误。
+ * 数据为本地同步加载，「加载中」为短暂展示（约 0.4s），
+ * 让四种状态在真实站点可见：成功（默认）、空（搜索无匹配）、
+ * 错误（数据层异常/为空）、加载中（首屏瞬间）。
+ */
+let homeLoadTimer = null;
+
+function renderHome(app) {
+  if (homeLoadTimer) clearTimeout(homeLoadTimer); // 快速连续切路由时防抖
+
+  // 1. 先渲染「加载中」骨架屏
+  app.innerHTML = Render.homePage("loading");
+
+  // 2. 数据就绪后切换到「成功」；数据层异常或为空则切「错误」
+  homeLoadTimer = setTimeout(() => {
+    homeLoadTimer = null;
+    try {
+      const songs = Store.getAllSongs();
+      if (!songs.length) {
+        app.innerHTML = Render.homePage("error"); // 数据为空 = 错误态，不用兜底页蒙混
+        console.error("[app] 数据为空：SONGS 校验后无有效歌曲");
+      } else {
+        app.innerHTML = Render.homePage("success");
+        setupSearch();
+      }
+    } catch (err) {
+      console.error("[app] 数据层异常，首页进入错误态：", err);
+      app.innerHTML = Render.homePage("error");
+    }
+    setActiveNav();
+    setupRevealAnimation();
+  }, 400);
 }
 
 /** 搜索框即时过滤（F4）：输入即过滤，无需回车；不整页重绘，输入框不丢焦点 */

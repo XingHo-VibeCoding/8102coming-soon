@@ -54,6 +54,17 @@ const Store = {
   },
 
   /**
+   * 热度榜（首页区块 1）：取带 heat 数值的歌，按播放快照降序。
+   * 没有可靠数字的歌不参与排名（一·六/一·七：不编造）。
+   */
+  getHotSongs(limit) {
+    return Store.getAllSongs()
+      .filter((s) => s.heat && typeof s.heat.plays === "number")
+      .sort((a, b) => b.heat.plays - a.heat.plays)
+      .slice(0, limit || 3);
+  },
+
+  /**
    * 搜索歌曲（F4）：按曲名 / 虚拟歌手 / 系列名匹配，大小写不敏感。
    * 空关键词返回全部。
    */
