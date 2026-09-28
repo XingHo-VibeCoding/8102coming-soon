@@ -315,7 +315,7 @@ function songCard(song) {
     ? SERIES.find((s) => s.id === song.seriesId)
     : null;
   const seriesTag = series
-    ? `<a class="card-series" href="#/series/${escapeHtml(series.id)}">📚 ${escapeHtml(series.name)}</a>`
+    ? `<span class="card-series" role="link" tabindex="0" data-series-href="#/series/${escapeHtml(series.id)}">📚 ${escapeHtml(series.name)}</span>`
     : "";
   const badges = song.badges
     .map((b) => `<span class="badge">${escapeHtml(b)}</span>`)

@@ -130,4 +130,27 @@ function setupRevealAnimation() {
 }
 
 window.addEventListener("hashchange", route);
-window.addEventListener("DOMContentLoaded", route);
+window.addEventListener("DOMContentLoaded", () => {
+  route();
+
+  // 卡片内「系列标签」跳转（B4 反向跳回）：用事件委托实现，
+  // 避免 <a> 嵌套 <a> 的无效 HTML；点击/回车/空格均触发，并阻止外层歌曲卡链接抢跳。
+  const goSeries = (el) => {
+    location.hash = el.getAttribute("data-series-href");
+  };
+  document.addEventListener("click", (e) => {
+    const tag = e.target.closest("[data-series-href]");
+    if (tag) {
+      e.preventDefault(); // 取消外层歌曲卡 <a> 的默认跳转
+      goSeries(tag);
+    }
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const tag = e.target.closest("[data-series-href]");
+    if (tag) {
+      e.preventDefault();
+      goSeries(tag);
+    }
+  });
+});
