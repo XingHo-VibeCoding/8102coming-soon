@@ -710,6 +710,10 @@ body {
   overflow-wrap: anywhere; /* 长英文串/长数字也能换行 */
 }
 
+.meta-date {
+  white-space: nowrap; /* 日期不拆行：换行只能发生在 · 分隔的条目之间（Day 10） */
+}
+
 /* ---------- 渐显动效对减少动态偏好用户自动关闭（无障碍） ---------- */
 
 @media (prefers-reduced-motion: reduce) {

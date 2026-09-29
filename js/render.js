@@ -205,7 +205,7 @@ const Render = {
       <main class="song-page">
         <header class="song-header">
           <h1 class="song-title">${escapeHtml(song.title)}</h1>
-          <p class="song-meta">${escapeHtml(song.singer)} · ${escapeHtml(song.author)} · ${escapeHtml(song.date)}</p>
+          <p class="song-meta">${escapeHtml(song.singer)} · ${escapeHtml(song.author)} · <span class="meta-date">${escapeHtml(song.date)}</span></p>
           <div class="song-badges">${badges}</div>
         </header>
         <section class="panels">${panels}</section>
@@ -326,7 +326,7 @@ function songCard(song) {
         <h2 class="card-title">${escapeHtml(song.title)}</h2>
         <div class="card-badges">${badges}</div>
       </div>
-      <p class="card-meta">${escapeHtml(song.singer)} · ${escapeHtml(song.author)} · ${escapeHtml(song.date)}</p>
+      <p class="card-meta">${escapeHtml(song.singer)} · ${escapeHtml(song.author)} · <span class="meta-date">${escapeHtml(song.date)}</span></p>
       <p class="card-intro">${escapeHtml(song.intro)}</p>
       ${seriesTag}
     </a>`;
