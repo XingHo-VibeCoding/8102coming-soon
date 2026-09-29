@@ -704,7 +704,9 @@ body {
 .panel-caption,
 .card-intro,
 .my-story-text,
-.milestone-label {
+.milestone-label,
+.about-block p,
+.about-link {
   overflow-wrap: anywhere; /* 长英文串/长数字也能换行 */
 }
 
