@@ -23,6 +23,9 @@ function validateSong(song) {
   return true;
 }
 
+// 收藏的本地存储键（Day 11）：纯静态站无服务器，收藏先记在本机浏览器里
+const FAV_KEY = "zvf:favorites";
+
 const Store = {
   /** 全部歌曲（F1 首页卡片列表用） */
   getAllSongs() {
@@ -87,5 +90,63 @@ const Store = {
         song.singer.toLowerCase().includes(kw) ||
         (seriesNames[song.id] || []).some((name) => name.includes(kw))
     );
+  },
+
+  // ---------- 收藏（Day 11 · 页面只调这三个函数，不直接碰 localStorage）----------
+  // 为什么先存本地：网站是纯静态的，没有服务器可存用户数据（PRD 方案 A）。
+  // 将来接云后端（方案 B）时，只改这三个函数的内部实现，页面代码零改动。
+
+  /** 收藏的歌曲 id 列表；读不到或数据损坏时返回空数组（不让页面崩） */
+  getFavorites() {
+    try {
+      const raw = localStorage.getItem(FAV_KEY);
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list.filter((x) => typeof x === "string") : [];
+    } catch (err) {
+      console.warn("[store] 读取收藏失败（当作没有收藏处理）：", err);
+      return [];
+    }
+  },
+
+  /** 这首歌收藏了没 */
+  isFavorite(id) {
+    return Store.getFavorites().indexOf(id) !== -1;
+  },
+
+  /**
+   * 切换收藏：点一下收藏，再点一下取消（撤销）。
+   * 返回 Promise —— 成功给出新状态（true = 已收藏）；失败 reject 一个 Error，由界面显示失败提示。
+   * 刻意延迟 700ms：让「处理中」这一态在真实站点上看得见（今天是临时实现，将来换成真实网络请求）。
+   * 失败演示开关：网址后面加 ?favfail=1，操作必定失败（用于练习「失败提示」，见 README）。
+   */
+  toggleFavorite(id) {
+    const forceFail =
+      new URLSearchParams(location.search).get("favfail") === "1";
+
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        if (forceFail) {
+          reject(new Error("模拟失败：网址带了 ?favfail=1"));
+          return;
+        }
+        try {
+          const list = Store.getFavorites();
+          const idx = list.indexOf(id);
+          let nextFav;
+          if (idx === -1) {
+            list.push(id);
+            nextFav = true;
+          } else {
+            list.splice(idx, 1);
+            nextFav = false;
+          }
+          localStorage.setItem(FAV_KEY, JSON.stringify(list));
+          resolve(nextFav);
+        } catch (err) {
+          // 浏览器禁用本地存储 / 存储写满，都会走到这里 → 界面显示失败提示
+          reject(err);
+        }
+      }, 700);
+    });
   },
 };

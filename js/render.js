@@ -218,6 +218,7 @@ const Render = {
           <p class="my-story-text">${escapeHtml(song.myStory)}</p>
         </section>
         <p class="listen-row">
+          ${favButton(song.id, "page")}
           <a class="btn btn-listen" href="${escapeHtml(song.bilibili)}" target="_blank" rel="noopener noreferrer">▶ 去B站听这首</a>
         </p>
         <footer class="page-footer">🎵 中V歌曲故事 · 由 vibe coding 学习营 · 世末歌者工作室出品</footer>
@@ -304,6 +305,21 @@ function seriesCard(s) {
 }
 
 /**
+ * 【可复用组件】收藏按钮（Day 11）
+ * 输入：歌曲 id + 样式变体（card = 卡片上的小胶囊 / page = 歌曲页上的按钮）
+ * 输出：带当前收藏状态的按钮 HTML。
+ * 卡片本身是 <a>，按 HTML 规矩链接里不能再放 <button>，所以卡片用 span[role=button]；
+ * 歌曲页是独立按钮，直接用真 <button>。两者都靠 data-fav-id 走同一套事件委托。
+ */
+function favButton(songId, variant) {
+  const on = Store.isFavorite(songId);
+  const isCard = variant === "card";
+  const cls = isCard ? "fav-btn fav-btn-card" : "fav-btn btn";
+  const tagAttrs = isCard ? ' role="button" tabindex="0"' : ' type="button"';
+  return `<${isCard ? "span" : "button"} class="${cls}"${tagAttrs} data-fav-id="${escapeHtml(songId)}" aria-pressed="${on}" aria-busy="false" title="${on ? "点击取消收藏" : "点击加入收藏"}">${on ? "♥ 已收藏" : "♡ 收藏"}</${isCard ? "span" : "button"}>`;
+}
+
+/**
  * 【可复用组件】歌曲卡片（余力加练 · Day 8）
  * 输入：一条歌曲数据对象（data.js 的 SONGS 元素）
  * 输出：整卡可点的 HTML 字符串；系列标签自带反向跳转（B4）
@@ -329,5 +345,6 @@ function songCard(song) {
       <p class="card-meta">${escapeHtml(song.singer)} · ${escapeHtml(song.author)} · <span class="meta-date">${escapeHtml(song.date)}</span></p>
       <p class="card-intro">${escapeHtml(song.intro)}</p>
       ${seriesTag}
+      ${favButton(song.id, "card")}
     </a>`;
 }

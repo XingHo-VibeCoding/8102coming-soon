@@ -585,9 +585,13 @@ body {
   transform: translateY(1px);
 }
 
-/* 键盘焦点可见性：Tab 导航时所有可点元素都有明确焦点圈（不干扰鼠标点击） */
+/* 键盘焦点可见性：Tab 导航时所有可点元素都有明确焦点圈（不干扰鼠标点击）
+   Day 11 加练补齐 [role="link"]：卡片里的「系列标签」是 span[role=link]，
+   上一版只覆盖了 a/button/[role=button]，键盘走到它身上时看不到焦点圈。 */
 a:focus-visible,
 button:focus-visible,
+[role="button"]:focus-visible,
+[role="link"]:focus-visible,
 .search-input:focus-visible {
   outline: 2px solid #7aa2ff;
   outline-offset: 2px;
@@ -595,6 +599,97 @@ button:focus-visible,
 
 .btn-listen {
   font-size: 16px;
+}
+
+/* ---------- 收藏按钮与提示条（Day 11：处理中 / 成功 / 失败 / 再点撤销） ---------- */
+
+.fav-btn {
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: color 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+}
+
+.fav-btn:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.fav-btn:active {
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateY(1px);
+}
+
+/* 已收藏：蓝色高亮，一眼看出状态 */
+.fav-btn[aria-pressed="true"] {
+  color: #9db9ff;
+  background: rgba(122, 162, 255, 0.16);
+  border-color: rgba(122, 162, 255, 0.45);
+}
+
+/* 处理中：变暗 + 光标变「忙」，配合禁用属性，明确表示此刻点不动 */
+.fav-btn.is-busy {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+/* 卡片上的胶囊紧跟在系列标签后面，留一点间距 */
+.fav-btn-card {
+  margin-left: 8px;
+}
+
+/* 歌曲页按钮：与「去B站听这首」并排，保持同等体量 */
+.listen-row .fav-btn {
+  margin-right: 12px;
+  padding: 12px 24px;
+  font-size: 16px;
+}
+
+/* 提示条：底部居中浮层；成功为蓝、失败为红；2.6 秒后自动收起（app.js 控制） */
+.toast-root {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 24px;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 50;
+}
+
+.toast-root.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast {
+  max-width: 100%;
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-size: 15px;
+  border: 1px solid;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.toast-success {
+  color: #dbeaff;
+  background: rgba(46, 96, 176, 0.96);
+  border-color: rgba(150, 200, 255, 0.5);
+}
+
+.toast-error {
+  color: #ffe4e4;
+  background: rgba(168, 52, 52, 0.96);
+  border-color: rgba(255, 170, 170, 0.5);
 }
 
 .nf-links {
@@ -722,6 +817,10 @@ body {
     transform: none;
     transition: none;
   }
+
+  .toast-root {
+    transition: none; /* 提示条改为直接出现/消失，不做滑入动效 */
+  }
 }
 
 /* ---------- 移动端适配（PRD F1：画格单列、文字不溢出） ---------- */
@@ -836,6 +935,15 @@ body {
 
   .card-series {
     padding: 9px 16px;
+  }
+
+  /* 收藏胶囊同样加高到 ≥44px，手机上易点中 */
+  .fav-btn-card {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 9px 16px;
+    font-size: 14px;
   }
 
   /* 触控目标：按钮/搜索框保持易点的大小 */

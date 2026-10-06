@@ -129,6 +129,78 @@ function setupRevealAnimation() {
   panels.forEach((p) => observer.observe(p));
 }
 
+// ============================================================
+// 收藏按钮（Day 11）：处理中 → 成功 / 失败 三态，再点一次即撤销
+// 提示条容器由 JS 创建（不动 index.html 的结构），role=status 供读屏器播报
+// ============================================================
+
+let toastTimer = null;
+
+/** 弹一条提示；type 为 "success"（成功）或 "error"（失败），2.6 秒后自动收起 */
+function showToast(message, type) {
+  let root = document.getElementById("toast-root");
+  if (!root) {
+    root = document.createElement("div");
+    root.id = "toast-root";
+    root.className = "toast-root";
+    root.setAttribute("role", "status");
+    root.setAttribute("aria-live", "polite");
+    document.body.appendChild(root);
+  }
+  root.innerHTML = `<div class="toast toast-${
+    type === "error" ? "error" : "success"
+  }">${escapeHtml(message)}</div>`;
+  root.classList.add("show");
+
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    root.classList.remove("show");
+    toastTimer = null;
+  }, 2600);
+}
+
+/**
+ * 点收藏按钮的完整流程：禁用 + 「处理中…」→ 成功切换状态并提示 → 失败回原样并提示。
+ * 处理中会置 data-busy=1，连点无效（防重复提交）。
+ */
+async function handleFavorite(el) {
+  const id = el.getAttribute("data-fav-id");
+  if (!id || el.dataset.busy === "1") return; // 处理中：忽略连点
+
+  const prevLabel = el.textContent;
+  const prevPressed = el.getAttribute("aria-pressed") === "true";
+
+  // ① 处理中：按钮变灰、文案改「处理中…」、不可再点
+  // 刻意不用 el.disabled：浏览器会因此让聚焦中的按钮失焦，键盘用户按一下回车就被甩出按钮、
+  // 看不到结果。改用 aria-disabled + data-busy 守卫，视觉与行为上依然"点不动"，但焦点留住（Day 11 加练）。
+  el.dataset.busy = "1";
+  el.classList.add("is-busy");
+  el.setAttribute("aria-busy", "true");
+  el.setAttribute("aria-disabled", "true");
+  el.textContent = "处理中…";
+
+  try {
+    // ② 成功：切到新状态 + 成功提示（再点一次即撤销，走的是同一条路径）
+    const nowFav = await Store.toggleFavorite(id);
+    el.setAttribute("aria-pressed", String(nowFav));
+    el.setAttribute("title", nowFav ? "点击取消收藏" : "点击加入收藏");
+    el.textContent = nowFav ? "♥ 已收藏" : "♡ 收藏";
+    showToast(nowFav ? "已加入收藏 ♥" : "已取消收藏", "success");
+  } catch (err) {
+    // ③ 失败：按钮回到原状态 + 失败提示（不静默吞掉错误）
+    console.error("[app] 收藏失败：", err);
+    el.setAttribute("aria-pressed", String(prevPressed));
+    el.textContent = prevLabel;
+    showToast("收藏失败，请再试一次", "error");
+  } finally {
+    // ④ 收尾：解除禁用，恢复可点（真按钮全程保持可聚焦，焦点不丢）
+    el.dataset.busy = "0";
+    el.classList.remove("is-busy");
+    el.setAttribute("aria-busy", "false");
+    el.removeAttribute("aria-disabled");
+  }
+}
+
 window.addEventListener("hashchange", route);
 window.addEventListener("DOMContentLoaded", () => {
   route();
@@ -151,6 +223,25 @@ window.addEventListener("DOMContentLoaded", () => {
     if (tag) {
       e.preventDefault();
       goSeries(tag);
+    }
+  });
+
+  // 收藏按钮（Day 11）：同一套委托同时管卡片上的 span[role=button] 和歌曲页的真 <button>。
+  // 卡片是 <a>，所以必须 preventDefault，否则会顺带跳进歌曲页。
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-fav-id]");
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    handleFavorite(btn);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const btn = e.target.closest("[data-fav-id]");
+    // 真 <button> 的 Enter/空格会自己触发 click，这里只管 span[role=button]，避免触发两次
+    if (btn && btn.tagName !== "BUTTON") {
+      e.preventDefault();
+      handleFavorite(btn);
     }
   });
 });
