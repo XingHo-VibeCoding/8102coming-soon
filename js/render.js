@@ -33,7 +33,7 @@ const Render = {
     }
 
     return `
-      <main class="home-page">
+      <main class="home-page" data-view-state="${escapeHtml(status)}">
         <header class="home-header">
           <h1 class="home-title">🎵 中V歌曲故事</h1>
           <p class="home-sub">把歌曲蕴含的故事，做成一页页看得见的漫画。</p>
@@ -52,6 +52,28 @@ const Render = {
         <footer class="page-footer">🎵 中V歌曲故事 · 由 vibe coding 学习营 · 世末歌者工作室出品</footer>
       </main>
     `;
+  },
+
+  /**
+   * 面包屑导航（Day 13）：多级页面里让读者随时知道「我在哪、从哪来、怎么回去」。
+   * 输入：`[{ label, href }]`，末项代表当前页（不给 href，标 aria-current）。
+   * 中间的分隔符只是装饰，标 aria-hidden，读屏器不会念出「›」。
+   * 无障外说明：外层是真 <nav aria-label="面包屑">，键盘可 Tab 逐个走。
+   */
+  breadcrumb(items) {
+    const parts = items
+      .map((it, i) => {
+        const sep =
+          i > 0 ? `<span class="crumb-sep" aria-hidden="true">›</span>` : "";
+        const isLast = i === items.length - 1;
+        const node =
+          isLast || !it.href
+            ? `<span class="crumb-current" aria-current="page">${escapeHtml(it.label)}</span>`
+            : `<a class="crumb" href="${escapeHtml(it.href)}">${escapeHtml(it.label)}</a>`;
+        return sep + node;
+      })
+      .join("");
+    return `<nav class="breadcrumb" aria-label="面包屑">${parts}</nav>`;
   },
 
   /** 区块 1 🔥 热度榜：Top N，播放数为公开快照值（来源见 data.js heat 字段） */
@@ -114,16 +136,80 @@ const Render = {
       </div>`;
   },
 
-  /** 系列详情页：世界观简介 + 该系列全部歌曲（PRD F2 / B3）。
-   *  若系列定义了 chapters（如妄想症的序曲/坠落之章/上升之章），按章节分组展示。 */
-  seriesPage(data) {
+  /**
+   * 页面级状态块 —— 加载中骨架（Day 13 抽公用）。
+   * 卡片形状与真实歌曲卡接近，避免「加载完布局跳一下」。n = 骨架张数。
+   */
+  skeletonCards(n) {
+    const bar = (w) => `<span class="sk-bar" style="width:${w}%"></span>`;
+    const skCard = `
+      <div class="sk-card">
+        <div class="sk-row">${bar(42)}${bar(18)}</div>
+        ${bar(88)}${bar(60)}
+      </div>`;
+    const count = Math.max(1, n || 3);
+    return `
+      <div class="home-skeleton" aria-busy="true" aria-label="加载中">
+        ${skCard.repeat(count)}
+      </div>`;
+  },
+
+  /**
+   * 页面级「错误」面板（Day 13 抽公用）：系列页、歌曲页共用首页同款长相。
+   * role="alert" 让读屏器立刻播报；重试按钮走 retryRoute()——它会先摘掉网址里的
+   * 演示参数（?state=error）再重试，所以「重试」是真能成功的，不是摆设。
+   */
+  stateErrorPanel(text, hint) {
+    return `
+      <div class="error-state" role="alert">
+        <p class="error-emoji">🌧️</p>
+        <p class="error-text">${escapeHtml(text)}</p>
+        <p class="error-hint">${escapeHtml(hint)}</p>
+        <button class="btn" type="button" onclick="retryRoute()">重试</button>
+      </div>`;
+  },
+
+  /** 系列页「空」状态（Day 13）：该系列已被收录，但旗下暂无可用歌曲 */
+  seriesEmpty(name) {
+    return `
+      <div class="empty-state">
+        <p class="empty-text">「${escapeHtml(name)}」目前还没有可看的歌曲</p>
+        <p class="empty-hint">该系列的歌曲还在整理中，先回首页看看别的吧。</p>
+        <p><a class="btn" href="#/">← 返回首页</a></p>
+      </div>`;
+  },
+
+  /**
+   * 系列详情页：世界观简介 + 该系列全部歌曲（PRD F2 / B3）。
+   * 若系列定义了 chapters（如妄想症的序曲/坠落之章/上升之章），按章节分组展示。
+   * Day 13 起支持页面级四态：loading（骨架屏）/ success（正常）/
+   * empty（旗下无歌曲）/ error（数据取不回来时的兜底面板）。
+   */
+  seriesPage(data, status) {
     if (!data) return Render.notFoundPage();
+    const state = status || "success";
+
+    // 面包屑：首页 › 系列名（末项为当前页）
+    const crumbs = [
+      { label: "首页", href: "#/" },
+      { label: data.name },
+    ];
 
     const byId = {};
     data.songs.forEach((s) => (byId[s.id] = s));
 
     let body;
-    if (data.chapters) {
+    if (state === "loading") {
+      // 外壳（面包屑 + 标题）先用真数据立住，只有内容区是骨架，减少「加载完跳一下」
+      body = Render.skeletonCards(3);
+    } else if (state === "error") {
+      body = Render.stateErrorPanel(
+        "这个系列暂时打不开——数据没能取回来。",
+        "点下面的按钮重试；若反复失败，请到仓库提交 issue 告诉站长。"
+      );
+    } else if (state === "empty" || data.songCount === 0) {
+      body = Render.seriesEmpty(data.name);
+    } else if (data.chapters) {
       // 章节分组：标题下按章节小标题陈列各章歌曲
       body = data.chapters
         .map((ch) => {
@@ -141,7 +227,8 @@ const Render = {
     }
 
     return `
-      <main class="home-page">
+      <main class="home-page" data-view-state="${escapeHtml(state)}">
+        ${Render.breadcrumb(crumbs)}
         <header class="home-header">
           <h1 class="home-title">📚 ${escapeHtml(data.name)}</h1>
           <p class="home-sub">${escapeHtml(data.intro)}</p>
@@ -209,8 +296,45 @@ const Render = {
     return songs.map(songCard).join("");
   },
 
-  /** 漫剧页：单曲故事页（PRD F3） */
-  songPage(song) {
+  /**
+   * 漫剧页：单曲故事页（PRD F3）。
+   * Day 13 起支持两态：loading（骨架屏）/ success（正常）。
+   * 详情页没有「空」态（单曲必有内容）；「找不到这首歌」走 notFoundPage，属另一回事。
+   */
+  songPage(song, status) {
+    const state = status || "success";
+
+    // 面包屑：首页 › 所属系列（若有）› 歌名；末项为当前页，是「多级页面」的回溯路径
+    const crumbs = [{ label: "首页", href: "#/" }];
+    const seriesOfSong = song.seriesId
+      ? SERIES.find((s) => s.id === song.seriesId)
+      : null;
+    if (seriesOfSong) {
+      crumbs.push({ label: seriesOfSong.name, href: `#/series/${seriesOfSong.id}` });
+    }
+    crumbs.push({ label: song.title });
+
+    if (state === "loading" || state === "error") {
+      const inner =
+        state === "loading"
+          ? Render.skeletonCards(3)
+          : Render.stateErrorPanel(
+              "这一页暂时打不开——曲目数据没能取回来。",
+              "点下面的按钮重试；若反复失败，请到仓库提交 issue 告诉站长。"
+            );
+      return `
+        <main class="song-page" data-view-state="${escapeHtml(state)}">
+          ${Render.breadcrumb(crumbs)}
+          <header class="song-header">
+            <h1 class="song-title">${escapeHtml(song.title)}</h1>
+            <p class="song-meta">${escapeHtml(song.singer)} · ${escapeHtml(song.author)}</p>
+          </header>
+          ${inner}
+          <footer class="page-footer">🎵 中V歌曲故事 · 由 vibe coding 学习营 · 世末歌者工作室出品</footer>
+        </main>
+      `;
+    }
+
     const badges = song.badges
       .map((b) => `<span class="badge">${escapeHtml(b)}</span>`)
       .join("");
@@ -242,7 +366,8 @@ const Render = {
       .join("");
 
     return `
-      <main class="song-page">
+      <main class="song-page" data-view-state="${escapeHtml(state)}">
+        ${Render.breadcrumb(crumbs)}
         <header class="song-header">
           <h1 class="song-title">${escapeHtml(song.title)}</h1>
           <p class="song-meta">${escapeHtml(song.singer)} · ${escapeHtml(song.author)} · <span class="meta-date">${escapeHtml(song.date)}</span></p>
@@ -271,7 +396,7 @@ const Render = {
     const seriesCount = Store.getAllSeries().length;
     const songCount = Store.getAllSongs().length;
     return `
-      <main class="home-page about-page">
+      <main class="home-page about-page" data-view-state="success">
         <header class="home-header">
           <h1 class="home-title">关于本站</h1>
           <p class="home-sub">把中V歌曲蕴含的故事，做成一页页看得见的漫画。</p>
@@ -307,7 +432,7 @@ const Render = {
       .map((s) => `<a class="btn" href="#/song/${escapeHtml(s.id)}">${escapeHtml(s.title)}</a>`)
       .join(" ");
     return `
-      <main class="song-page">
+      <main class="song-page" data-view-state="notfound">
         <header class="song-header">
           <h1 class="song-title">没有找到这个页面</h1>
           <p class="song-meta">链接可能输错了。也许你想找的是——</p>

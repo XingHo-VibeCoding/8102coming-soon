@@ -21,6 +21,32 @@ function route() {
   setupRevealAnimation();
 }
 
+/**
+ * 状态演示开关（Day 13）：网址里加 ?state=loading / error / empty，
+ * 可把当前页面「按住」停在指定状态，方便肉眼检查与截图。
+ * 位置两处都认（前者推荐，地址栏更直观）：
+ *   http://localhost:8000/?state=error#/series/wangxiang
+ *   http://localhost:8000/#/series/wangxiang?state=error
+ * 不带这个参数 = 正常状态，日常访问不受影响。
+ */
+function getStateOverride() {
+  const fromSearch = new URLSearchParams(location.search).get("state");
+  if (fromSearch) return fromSearch;
+  const raw = location.hash || "";
+  const q = raw.indexOf("?");
+  if (q === -1) return "";
+  return new URLSearchParams(raw.slice(q + 1)).get("state") || "";
+}
+
+/** 「重试」按钮（Day 13）：先摘掉网址里的演示参数，再重跑当前路由 */
+function retryRoute() {
+  const url = new URL(location.href);
+  url.searchParams.delete("state");
+  const cleanHash = url.hash.split("?")[0];
+  history.replaceState(null, "", url.pathname + url.search + cleanHash);
+  route(); // 参数已摘干净，这一步会真正把数据渲染出来（不再回到演示状态）
+}
+
 /** 导航栏当前页高亮（框架 B）：song/series 归入「首页」高亮 */
 function setActiveNav() {
   const hash = location.hash || "#/";
@@ -30,18 +56,34 @@ function setActiveNav() {
   });
 }
 
+// 系列页的「加载中」定时器句柄：连续快速切换路由时用同一个，避免旧定时器把新页面覆盖掉
+let seriesLoadTimer = null;
+
 function renderRoute(app) {
-  const hash = location.hash || "#/";
+  // 先剥掉 hash 里的演示参数（如 #/series/wangxiang?state=error），否则会当成路由 id 的一部分
+  const hash = (location.hash || "#/").split("?")[0];
+  const forced = getStateOverride();
 
   const songMatch = hash.match(/^#\/song\/(.+)$/);
   const seriesMatch = hash.match(/^#\/series\/(.+)$/);
   if (songMatch) {
     const song = Store.getSongById(songMatch[1]);
-    app.innerHTML = song
-      ? Render.songPage(song)
-      : Render.notFoundPage(); // 错 hash 兜底（TECH_DESIGN §6）
+    if (!song) {
+      app.innerHTML = Render.notFoundPage(); // 错 hash 兜底（TECH_DESIGN §6）
+    } else if (forced === "loading" || forced === "error") {
+      app.innerHTML = Render.songPage(song, forced); // 演示开关：停在指定状态不自动切
+    } else {
+      renderSong(app, song); // 正常访问：先骨架，再出内容
+    }
   } else if (seriesMatch) {
-    app.innerHTML = Render.seriesPage(Store.getSeriesById(seriesMatch[1]));
+    const series = Store.getSeriesById(seriesMatch[1]);
+    if (!series) {
+      app.innerHTML = Render.notFoundPage(); // 系列 id 根本不存在
+    } else if (forced) {
+      app.innerHTML = Render.seriesPage(series, forced); // 演示开关：停在指定状态不自动切
+    } else {
+      renderSeries(app, series); // 正常访问：先骨架，再出内容
+    }
   } else if (hash === "#/about") {
     app.innerHTML = Render.aboutPage();
   } else if (hash === "#/" || hash === "#" || hash === "") {
@@ -63,6 +105,14 @@ let homeLoadTimer = null;
 
 function renderHome(app) {
   if (homeLoadTimer) clearTimeout(homeLoadTimer); // 快速连续切路由时防抖
+  if (seriesLoadTimer) { clearTimeout(seriesLoadTimer); seriesLoadTimer = null; }
+
+  // 演示开关：?state=loading / error 时「按住」在这个状态不自动切，方便肉眼检查与截图
+  const forced = getStateOverride();
+  if (forced === "loading" || forced === "error") {
+    app.innerHTML = Render.homePage(forced);
+    return;
+  }
 
   // 1. 先渲染「加载中」骨架屏
   app.innerHTML = Render.homePage("loading");
@@ -83,6 +133,37 @@ function renderHome(app) {
       console.error("[app] 数据层异常，首页进入错误态：", err);
       app.innerHTML = Render.homePage("error");
     }
+    setActiveNav();
+    setupRevealAnimation();
+  }, 400);
+}
+
+/**
+ * 系列页状态机（Day 13）：加载中 → 成功 / 空。
+ * 数据同样是本地同步的，「加载中」只短暂出现（约 0.4s），但它必须真实存在 ——
+ * 否则这一态在站点上永远看不见，也就没法检查它长什么样。
+ * 网址开关（?state=loading / error / empty）由 renderRoute 直接按住，不走这里。
+ */
+function renderSeries(app, series) {
+  app.innerHTML = Render.seriesPage(series, "loading");
+  seriesLoadTimer = setTimeout(() => {
+    seriesLoadTimer = null;
+    const fresh = Store.getSeriesById(series.id);
+    // 系列在、但一首可用歌曲都没有 → 空状态（不假装有内容）
+    const state = !fresh || fresh.songCount === 0 ? "empty" : "success";
+    app.innerHTML = Render.seriesPage(fresh || series, state);
+    setActiveNav();
+    setupRevealAnimation();
+  }, 400);
+}
+
+/** 歌曲页状态机（Day 13）：加载中 → 成功（详情页没有「空」态，「找不到这首歌」走兜底页） */
+function renderSong(app, song) {
+  app.innerHTML = Render.songPage(song, "loading");
+  seriesLoadTimer = setTimeout(() => {
+    seriesLoadTimer = null;
+    const fresh = Store.getSongById(song.id);
+    app.innerHTML = Render.songPage(fresh || song, "success");
     setActiveNav();
     setupRevealAnimation();
   }, 400);

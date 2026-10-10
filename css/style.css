@@ -774,6 +774,62 @@ button:focus-visible,
   text-align: left;
 }
 
+/* ---------- 面包屑导航（Day 13：多级页面「我在哪 / 怎么回去」） ----------
+   里面是可点的 <a>，三态齐全：hover（底色变亮）/ active（压下 1px）/
+   focus-visible（由上方 a:focus-visible 统一给焦点圈）。
+   长系列名/长歌名用省略号截断，保证任何宽度都不横向溢出。 */
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0 0 16px;
+  font-size: 13px;
+  min-width: 0;
+}
+
+.crumb {
+  display: inline-block;
+  max-width: 200px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  color: var(--text-dim);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+}
+
+.crumb:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--card-border);
+}
+
+.crumb:active {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(1px);
+}
+
+/* 当前页：不可点，颜色略亮以示「你在这」 */
+.crumb-current {
+  display: inline-block;
+  max-width: 200px;
+  padding: 4px 10px;
+  color: var(--text-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.crumb-sep {
+  color: var(--text-dim);
+  opacity: 0.7;
+}
+
 /* ---------- 全局导航栏（框架 B） ---------- */
 
 .site-nav {
@@ -1016,6 +1072,18 @@ body {
     min-height: 44px;
     padding: 9px 16px;
     font-size: 14px;
+  }
+
+  /* Day 13：面包屑也加高到 ≥44px，手机上易点中；宽度收窄，长歌名用省略号 */
+  .crumb {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    max-width: 44vw;
+  }
+
+  .crumb-current {
+    max-width: 44vw;
   }
 
   /* 触控目标：按钮/搜索框保持易点的大小 */

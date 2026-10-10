@@ -59,6 +59,20 @@ http://localhost:8000/
 | `#/series/{id}` | 系列详情页：按章节分组陈列该系列歌曲 |
 | `#/about` | 关于页：项目介绍与内容机制说明 |
 
+## 🧪 状态演示开关（Day 13）
+
+列表/详情页都有「加载中 / 正常 / 空 / 错误」页面级状态。网址后面加 `?state=参数` 可把页面**按住**在指定状态，便于肉眼检查与截图：
+
+| 地址 | 效果 |
+|---|---|
+| `?state=loading#/series/wangxiang` | 系列页停在「加载中」骨架屏 |
+| `?state=empty#/series/wangxiang` | 系列页停在「空」状态 |
+| `?state=error#/series/wangxiang` | 系列页停在「错误」面板（重试按钮可用） |
+| `?state=loading#/song/yichong-jiahai` | 歌曲页骨架屏 |
+| `?state=error#/` | 首页错误面板 |
+
+参数写在 `#` 前后都可以：`?state=error#/series/wangxiang` 与 `#/series/wangxiang?state=error` 等效。日常访问不带参数，不受影响。收藏失败的演示开关是 Day 11 的 `?favfail=1`。
+
 ## 📚 加一首新歌怎么做（F4 验收项）
 
 只改 `js/data.js` 一个文件：在 `SONGS` 数组加一条歌曲记录（含 id/title/singer/author/date/badges/intro/seriesId/panels/milestones/bilibili/myStory），如属新系列再往 `SERIES` 加一条。页面、路由、搜索自动生效，无需改任何代码。
