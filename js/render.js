@@ -22,6 +22,8 @@ const Render = {
         ${Render.hotList(Store.getHotSongs(3))}
         <section class="all-songs-section">
           <h2 class="section-title">🎵 全部歌曲</h2>
+          ${Render.singerFilterBar("")}
+          <p class="filter-status" id="filter-status" role="status">${Render.filterStatusText("", "", Store.getAllSongs().length)}</p>
           <div class="card-list" id="card-list">${Store.getAllSongs().map(songCard).join("")}</div>
         </section>
         <section class="series-section reveal">
@@ -153,16 +155,54 @@ const Render = {
   },
 
   /**
-   * 搜索结果列表（F4）：只重绘 #card-list，不整页刷新，输入框不丢焦点。
-   * 无匹配时显示空状态（PRD D4：不清屏、不报错）。
+   * 虚拟歌手筛选按钮组（Day 12）：一颗「全部」+ 每位歌手一颗。
+   * 用真 <button>（不是 span[role=button]），Tab 可达、回车/空格原生可触发，
+   * 也自动被 css/style.css 的 button:focus-visible 焦点圈覆盖。
+   * aria-pressed 表达「当前选中」，读屏器能播报。
    */
-  filteredList(keyword) {
-    const songs = Store.searchSongs(keyword);
+  singerFilterBar(activeSinger) {
+    const chip = (value, label, on, count) => `
+      <button class="singer-chip" type="button" data-singer="${escapeHtml(value)}" aria-pressed="${on}">
+        ${escapeHtml(label)} <span class="chip-count">${count}</span>
+      </button>`;
+    return `
+      <div class="singer-filter" id="singer-filter" role="group" aria-label="按虚拟歌手筛选">
+        ${chip("", "全部", !activeSinger, Store.getAllSongs().length)}
+        ${Store.getSingers()
+          .map((s) => chip(s.name, s.name, activeSinger === s.name, s.count))
+          .join("")}
+      </div>`;
+  },
+
+  /**
+   * 当前筛选条件与结果条数（Day 12）：让用户一眼看到「筛了什么、剩几首」。
+   * 纯文本（不给标签），便于原地更新而不重建节点 —— 更新时不会打断读屏焦点。
+   */
+  filterStatusText(singer, keyword, count) {
+    const parts = [];
+    if (singer) parts.push(`歌手：${singer}`);
+    const kw = String(keyword || "").trim();
+    if (kw) parts.push(`关键词：${kw}`);
+    return `${parts.length ? parts.join(" · ") : "未筛选"} · 共 ${count} 首`;
+  },
+
+  /**
+   * 搜索结果列表（F4）：只重绘 #card-list，不整页刷新，输入框不丢焦点。
+   * 无匹配时显示空状态（PRD D4：不清屏、不报错），并写明当前筛选条件（Day 12）。
+   */
+  filteredList(keyword, singer) {
+    const kw = String(keyword || "").trim();
+    const sg = String(singer || "").trim();
+    const songs = Store.filterSongs(sg, kw);
     if (songs.length === 0) {
+      const cond = [sg && `歌手「${sg}」`, kw && `关键词「${kw}」`]
+        .filter(Boolean)
+        .join(" + ");
       return `
         <div class="empty-state">
-          <p class="empty-text">没有找到相关歌曲（试试「世末」「洛天依」「妄想症」）</p>
-          <button class="btn" id="clear-search" type="button">清空搜索</button>
+          <p class="empty-text">没有找到相关歌曲${cond ? `（当前条件：${escapeHtml(cond)}）` : ""}</p>
+          <p class="empty-hint">换个歌手，或点下面的按钮清空条件。</p>
+          <button class="btn" id="clear-filters" type="button">清空筛选条件</button>
         </div>
       `;
     }

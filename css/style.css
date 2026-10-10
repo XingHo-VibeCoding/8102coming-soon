@@ -12,6 +12,10 @@
   --text: #ffffff;
   --text-dim: #9aa5ce;
   --text-soft: #c3cee3;
+  /* Day 12：强调色（现用于键盘焦点圈与新加的筛选按钮选中态） */
+  --accent: #7aa2ff;
+  --accent-soft: rgba(122, 162, 255, 0.22);
+  --accent-border: rgba(122, 162, 255, 0.55);
 }
 
 * { box-sizing: border-box; }
@@ -300,6 +304,68 @@ body {
 
 .all-songs-section {
   margin-bottom: 36px;
+}
+
+/* ---------- 虚拟歌手筛选（Day 12）----------
+   真 <button>，三态齐全：hover（底色变亮）/ active（按下缩小）/ focus-visible（焦点圈，
+   由下方 button:focus-visible 统一给）。选中用 aria-pressed="true" 表达，不只靠颜色。 */
+
+.singer-filter {
+  display: flex;
+  flex-wrap: wrap; /* 窄屏自动换行，不撑出横向滚动条 */
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.singer-chip {
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text-soft);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  padding: 7px 14px;
+  min-height: 34px;
+  cursor: pointer;
+  transition: color 0.25s ease, background 0.25s ease, border-color 0.25s ease,
+    transform 0.15s ease;
+}
+
+.singer-chip:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.singer-chip:active {
+  transform: scale(0.96);
+}
+
+.singer-chip[aria-pressed="true"] {
+  color: var(--text);
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+}
+
+.chip-count {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.singer-chip[aria-pressed="true"] .chip-count {
+  color: var(--text-soft);
+}
+
+/* 当前筛选条件 + 结果条数（Day 12）：用户一眼看到「筛了什么、剩几首」 */
+.filter-status {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin: 0 0 14px;
+}
+
+.empty-hint {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin: 0 0 16px;
 }
 
 /* ---------- 首页加载中：骨架屏（扁平脉冲，无渐变） ---------- */
@@ -935,6 +1001,12 @@ body {
 
   .card-series {
     padding: 9px 16px;
+  }
+
+  /* Day 12：筛选按钮同样加高到 ≥44px，手机上易点中 */
+  .singer-chip {
+    min-height: 44px;
+    padding: 10px 16px;
   }
 
   /* 收藏胶囊同样加高到 ≥44px，手机上易点中 */

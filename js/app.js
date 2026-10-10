@@ -77,7 +77,7 @@ function renderHome(app) {
         console.error("[app] 数据为空：SONGS 校验后无有效歌曲");
       } else {
         app.innerHTML = Render.homePage("success");
-        setupSearch();
+        setupFilters();
       }
     } catch (err) {
       console.error("[app] 数据层异常，首页进入错误态：", err);
@@ -88,23 +88,61 @@ function renderHome(app) {
   }, 400);
 }
 
-/** 搜索框即时过滤（F4）：输入即过滤，无需回车；不整页重绘，输入框不丢焦点 */
-function setupSearch() {
+/**
+ * 首页筛选（Day 12）：虚拟歌手按钮 + 搜索关键词，两者叠加生效。
+ * 不整页重绘 —— 只换 #card-list 的内容，输入框和筛选按钮的焦点都不丢。
+ * 筛选条件与结果条数实时显示在 #filter-status 上，用户一眼看到「筛了什么、剩几首」。
+ */
+function setupFilters() {
   const input = document.getElementById("search-input");
   const list = document.getElementById("card-list");
-  if (!input || !list) return;
+  const bar = document.getElementById("singer-filter");
+  if (!input || !list || !bar) return;
 
-  input.addEventListener("input", () => {
-    list.innerHTML = Render.filteredList(input.value);
-    const clearBtn = document.getElementById("clear-search");
-    if (clearBtn) {
-      clearBtn.addEventListener("click", () => {
-        input.value = "";
-        list.innerHTML = Render.filteredList("");
-        input.focus();
-      });
+  const state = { singer: "", keyword: "" };
+
+  // 按 state 重画列表 + 条件条（不清输入框、不重绘按钮，焦点保住）
+  const apply = () => {
+    const songs = Store.filterSongs(state.singer, state.keyword);
+    list.innerHTML = Render.filteredList(state.keyword, state.singer);
+    const status = document.getElementById("filter-status");
+    if (status) {
+      status.textContent = Render.filterStatusText(state.singer, state.keyword, songs.length);
     }
     setupRevealAnimation();
+  };
+
+  // 把按钮的选中态同步到 state（只改 aria-pressed，不重建按钮节点）
+  const syncChips = () => {
+    bar.querySelectorAll(".singer-chip").forEach((chip) => {
+      chip.setAttribute("aria-pressed", String((chip.dataset.singer || "") === state.singer));
+    });
+  };
+
+  input.addEventListener("input", () => {
+    state.keyword = input.value;
+    apply();
+  });
+
+  // 筛选按钮：点一次选中，再点同一位歌手即取消（回到「全部」）
+  bar.addEventListener("click", (e) => {
+    const chip = e.target.closest(".singer-chip");
+    if (!chip) return;
+    const value = chip.dataset.singer || "";
+    state.singer = state.singer === value ? "" : value;
+    syncChips();
+    apply();
+  });
+
+  // 空状态的「清空筛选条件」按钮由列表容器委托（容器随首页重建，不会累积监听）
+  list.addEventListener("click", (e) => {
+    if (!e.target.closest("#clear-filters")) return;
+    state.singer = "";
+    state.keyword = "";
+    input.value = "";
+    syncChips();
+    apply();
+    input.focus();
   });
 }
 

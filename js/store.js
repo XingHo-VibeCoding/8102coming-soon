@@ -92,6 +92,46 @@ const Store = {
     );
   },
 
+  // ---------- 虚拟歌手筛选（Day 12）----------
+  // 一首歌的 singer 可能是多人合唱，形如「洛天依、言和、乐正绫」，
+  // 拆分符按顿号/逗号/斜杠兼容（数据录入时可能混用）。
+
+  /** 拆分 singer 字段为歌手名数组，去空格去空值 */
+  splitSingers(singer) {
+    return String(singer || "")
+      .split(/[、,，/]/)
+      .map((name) => name.trim())
+      .filter(Boolean);
+  },
+
+  /**
+   * 全部虚拟歌手 + 各自歌曲数（按曲数降序），供首页筛选按钮使用。
+   * 曲数按「该歌手参与的全部歌曲」计（合唱曲对每个歌手都记一次），
+   * 因此各数之和会大于歌曲总数，这是合唱的正常结果，不是算错。
+   */
+  getSingers() {
+    const counts = new Map();
+    Store.getAllSongs().forEach((song) => {
+      Store.splitSingers(song.singer).forEach((name) => {
+        counts.set(name, (counts.get(name) || 0) + 1);
+      });
+    });
+    return [...counts.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "zh"));
+  },
+
+  /**
+   * 筛选歌曲（Day 12）：歌手 + 关键词，两者叠加生效（同时满足才留下）。
+   * singer 传空字符串表示不限歌手；关键词沿用 searchSongs 的匹配规则。
+   */
+  filterSongs(singer, keyword) {
+    const sg = String(singer || "").trim();
+    const songs = Store.searchSongs(keyword);
+    if (!sg) return songs;
+    return songs.filter((song) => Store.splitSingers(song.singer).indexOf(sg) !== -1);
+  },
+
   // ---------- 收藏（Day 11 · 页面只调这三个函数，不直接碰 localStorage）----------
   // 为什么先存本地：网站是纯静态的，没有服务器可存用户数据（PRD 方案 A）。
   // 将来接云后端（方案 B）时，只改这三个函数的内部实现，页面代码零改动。
