@@ -7,13 +7,17 @@
 // Song 必填字段（TECH_DESIGN §3.2）；myStory 虽标必填但首版为占位文案（2026-09-26 站长拍板），不校验
 const REQUIRED_SONG_FIELDS = [
   "id", "title", "singer", "author", "date",
-  "bilibili", "badges", "intro", "panels",
+  "badges", "intro", "panels",
 ];
-
+// bilibili 单列（Day 14 补录时改）：不是每首歌都在B站有投稿页（如《同归世界线》只投了 5sing）。
+// 求真务实：允许没有 bilibili，但必须写明 noBilibili 原因，不许留空、更不许编造链接。
 function validateSong(song) {
   const missing = REQUIRED_SONG_FIELDS.filter(
     (f) => song[f] === undefined || song[f] === null || song[f] === ""
   );
+  const hasBili = typeof song.bilibili === "string" && song.bilibili.trim() !== "";
+  const hasReason = typeof song.noBilibili === "string" && song.noBilibili.trim() !== "";
+  if (!hasBili && !hasReason) missing.push("bilibili（或 noBilibili 说明）");
   if (missing.length > 0) {
     console.warn(
       `[store] 歌曲「${song.title || song.id}」缺少必填字段：${missing.join("、")}，已跳过该条`

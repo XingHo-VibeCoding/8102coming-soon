@@ -302,6 +302,11 @@ body {
   line-height: 1.7;
 }
 
+/* 热度榜说明里的关键提醒（Day 14：把「不是实时数据」显出来） */
+.hot-note-em {
+  color: var(--text-soft);
+}
+
 .all-songs-section {
   margin-bottom: 36px;
 }
@@ -665,6 +670,18 @@ button:focus-visible,
 
 .btn-listen {
   font-size: 16px;
+}
+
+/* 无B站投稿页时，用说明文字代替「去B站听这首」按钮（Day 14：《同归世界线》只投了 5sing） */
+.listen-none {
+  display: inline-block;
+  padding: 12px 20px;
+  border: 1px dashed var(--card-border);
+  border-radius: 999px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-dim);
+  vertical-align: middle;
 }
 
 /* ---------- 收藏按钮与提示条（Day 11：处理中 / 成功 / 失败 / 再点撤销） ---------- */

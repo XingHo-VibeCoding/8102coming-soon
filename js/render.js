@@ -92,7 +92,7 @@ const Render = {
           </span>
           <span class="hot-plays">
             <span class="hot-num">${h.plays} 万</span>
-            <span class="hot-asof">播放快照 · ${escapeHtml(h.asOf)}</span>
+            <span class="hot-asof">播放量 · 截至 ${escapeHtml(h.asOf)}</span>
           </span>
         </a>`;
       })
@@ -101,7 +101,7 @@ const Render = {
       <section class="hot-section">
         <h2 class="section-title">🔥 热度榜</h2>
         <div class="hot-list">${rows}</div>
-        <p class="hot-note">播放数为公开快照值（来源见各曲数据）；无可靠数字的歌曲不参与排名。</p>
+        <p class="hot-note">数字取自 B 站公开播放量，日期为记录时间，<strong class="hot-note-em">不是实时数据</strong>；想看最新播放量请点进 B 站原曲页。查不到可靠数字的歌曲不参与排名。</p>
       </section>`;
   },
 
@@ -384,7 +384,11 @@ const Render = {
         </section>
         <p class="listen-row">
           ${favButton(song.id, "page")}
-          <a class="btn btn-listen" href="${escapeHtml(song.bilibili)}" target="_blank" rel="noopener noreferrer">▶ 去B站听这首</a>
+          ${
+            song.bilibili
+              ? `<a class="btn btn-listen" href="${escapeHtml(song.bilibili)}" target="_blank" rel="noopener noreferrer">▶ 去B站听这首</a>`
+              : `<span class="listen-none">🎧 ${escapeHtml(song.noBilibili || "本曲暂无B站投稿页")}</span>`
+          }
         </p>
         <footer class="page-footer">🎵 中V歌曲故事 · 由 vibe coding 学习营 · 世末歌者工作室出品</footer>
       </main>
