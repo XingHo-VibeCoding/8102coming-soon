@@ -31,10 +31,11 @@ const SERIES = [
   {
     id: "wangxiang",
     name: "妄想症系列",
-    intro: "DELA（曲）× 雨狸（词）的九重连环剧：泠珞因挚友零羽的离去坠入重重妄想，历经坠落与上升，最终直面现实。序曲之后，正篇分坠落之章（一重~五重）与上升之章（六重~九重）。",
+    intro: "DELA（曲）× 雨狸（词）的九重连环剧：泠珞因挚友零羽的离去坠入重重妄想，历经坠落与上升，最终直面现实。序曲之后，正篇分坠落之章（一重~五重）与上升之章（六重~九重）；另有零羽的还原之章·角色歌《零重祈愿》。",
     songIds: [
       "nova", "yichong-jiahai", "erzhong-biange", "sanzhong-ailian", "sizhong-zuinie",
       "wuzhong-kongdong", "liuzhong-buzhong", "qizhong-gubing", "bazhong-huigui", "jiuzhong-xianshi",
+      "lingchong-qiyuan",
     ],
     // 章节框架（系列总览页按此分组展示）：
     //   序曲 NOVA（先行概念曲）；坠落之章 = 一重~五重（五重为 b之章终曲，B站补档简介可证）；
@@ -44,6 +45,7 @@ const SERIES = [
       { name: "序曲", songIds: ["nova"] },
       { name: "坠落之章", songIds: ["yichong-jiahai", "erzhong-biange", "sanzhong-ailian", "sizhong-zuinie", "wuzhong-kongdong"] },
       { name: "上升之章", songIds: ["liuzhong-buzhong", "qizhong-gubing", "bazhong-huigui", "jiuzhong-xianshi"] },
+      { name: "角色歌（还原之章）", songIds: ["lingchong-qiyuan"] },
     ],
     // 来源：B站专栏 cv41416227 + 萌娘百科《九重现实》《八重回归》《七重痼病》 + B站补档简介 ｜ 录入 2026-09-26
   },
@@ -512,6 +514,33 @@ const SONGS = [
     milestones: [
       { label: "投稿B站（av9214515）· 系列完结作", date: "2017-03-17" },
       { label: "传说曲 · 播放 282.33万（最终记录快照）", date: "2024-09-07（最终记录）" },
+    ],
+    myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
+  },
+  {
+    id: "lingchong-qiyuan",
+    title: "零重祈愿",
+    singer: "乐正绫",
+    author: "崩坏（曲）· 雨狸（策划/词）· DELA（代投）",
+    date: "2017-02-25",
+    // ⚠ 求真务实：本曲为系列角色歌（零羽的还原之章），非正篇「九重」之一；
+    //   原投稿 av8815372（DELA 于 2017-02-25 代投），传说曲（2022-01-08 达成，183.51万播放）。
+    bilibili: "https://www.bilibili.com/video/av8815372",
+    badges: ["角色歌"],
+    intro: "对应「还原之章·零羽」。零羽外表开朗，背后却是混乱破碎的家庭——乐队通过海选、生日收到项链的喜悦后，回家却看见举着菜刀疯了的母亲。混乱中母亲割伤了她的手，她再也无法弹吉他，默默退出比赛、转身退场。这是整系列妄想发生前的开端，也是结局的伏笔。",
+    seriesId: "wangxiang",
+    // —— 分镜（共 5 格）：AI 按公开资料起草、免审入库（TECH_DESIGN §5）
+    // 来源：萌娘百科《零重祈愿》 https://zh.moegirl.org.cn/零重祈愿 ｜ 录入 2026-10-14
+    panels: [
+      { caption: "零羽外表开朗，是乐队 VividCycle 的吉他手兼主唱，承载着所有人的期待。" },
+      { caption: "乐队通过海选，生日那天还收到了泠珞的项链，一切都那么开心。" },
+      { caption: "可当她揣着通知书笑着回到家时，看到的是举着菜刀、已然疯了的母亲。" },
+      { caption: "混乱中母亲割伤了她的手——她再也无法弹吉他。" },
+      { caption: "她再也坚持不下去，默默退出比赛，转身退场。这是整系列妄想发生前的开端。" },
+    ],
+    milestones: [
+      { label: "投稿B站（av8815372）· 零羽的还原之章·角色歌", date: "2017-02-25" },
+      { label: "传说曲 · 播放 183.51万（2022-01-08 达成）", date: "2022-01-08" },
     ],
     myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
   },

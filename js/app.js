@@ -181,6 +181,7 @@ function setupFilters() {
   if (!input || !list || !bar) return;
 
   const state = { singer: "", keyword: "" };
+  let wasActive = false; // 仅从「无筛选」切到「有筛选」时滚动一次，避免每次按键都跳
 
   // 按 state 重画列表 + 条件条（不清输入框、不重绘按钮，焦点保住）
   const apply = () => {
@@ -191,6 +192,21 @@ function setupFilters() {
       status.textContent = Render.filterStatusText(state.singer, state.keyword, songs.length);
     }
     setupRevealAnimation();
+
+    // 手机端：筛选后把结果滚动到可见区，否则用户看不到列表变化、以为搜索是摆设
+    // （结果在搜索框下方约 2 屏处；仅窄屏、且仅在「开始筛选」那一刻滚动一次）
+    const active = !!(state.keyword || state.singer);
+    if (active && !wasActive && window.innerWidth <= 600) {
+      const box = document.querySelector(".search-box");
+      const boxH = box ? box.getBoundingClientRect().height : 0;
+      const rect = list.getBoundingClientRect();
+      const visible = rect.top >= boxH && rect.bottom <= window.innerHeight;
+      if (!visible) {
+        const y = rect.top + window.scrollY - boxH - 12;
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
+    }
+    wasActive = active;
   };
 
   // 把按钮的选中态同步到 state（只改 aria-pressed，不重建按钮节点）

@@ -311,6 +311,52 @@ body {
   margin-bottom: 36px;
 }
 
+/* ---------- 按系列分组（同伴反馈：首页系列脉络不清）----------
+   组标题即进系列页的入口，用真 <a>：hover 变色 / active 微缩 / focus-visible 焦点圈。
+   手机端 min-height 44px（项目硬指标：触控目标不小于 44px）。 */
+.group-block {
+  margin-bottom: 8px;
+}
+
+.group-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 20px 4px 12px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.group-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 4px 10px 4px 0;
+  color: var(--text);
+  text-decoration: none;
+  transition: color 0.18s ease, transform 0.12s ease;
+}
+
+.group-link:hover {
+  color: var(--accent);
+}
+
+.group-link:active {
+  transform: scale(0.98);
+}
+
+.group-link-static {
+  color: var(--text-soft);
+}
+
+.group-count {
+  flex: none;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
 /* ---------- 虚拟歌手筛选（Day 12）----------
    真 <button>，三态齐全：hover（底色变亮）/ active（按下缩小）/ focus-visible（焦点圈，
    由下方 button:focus-visible 统一给）。选中用 aria-pressed="true" 表达，不只靠颜色。 */
@@ -1080,6 +1126,12 @@ body {
   .singer-chip {
     min-height: 44px;
     padding: 10px 16px;
+  }
+
+  /* 系列分组入口同样要够大：手机上一指头点得到（≥44px） */
+  .group-link {
+    min-height: 44px;
+    padding: 8px 12px 8px 0;
   }
 
   /* 收藏胶囊同样加高到 ≥44px，手机上易点中 */

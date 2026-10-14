@@ -19,16 +19,18 @@ const Render = {
       content = Render.homeError();
     } else {
       content = `
+        ${/* 区块顺序（同伴反馈后调整）：系列是比单曲更上位的层级，提到最前面——
+            一进首页首屏就能看到「这个站是按系列组织的」，不必再滑到页面最底部。 */ ""}
+        <section class="series-section reveal">
+          <h2 class="section-title">📚 系列曲</h2>
+          <div class="series-list">${Render.seriesCards()}</div>
+        </section>
         ${Render.hotList(Store.getHotSongs(3))}
         <section class="all-songs-section">
           <h2 class="section-title">🎵 全部歌曲</h2>
           ${Render.singerFilterBar("")}
           <p class="filter-status" id="filter-status" role="status">${Render.filterStatusText("", "", Store.getAllSongs().length)}</p>
-          <div class="card-list" id="card-list">${Store.getAllSongs().map(songCard).join("")}</div>
-        </section>
-        <section class="series-section reveal">
-          <h2 class="section-title">📚 系列曲</h2>
-          <div class="series-list">${Render.seriesCards()}</div>
+          <div class="card-list" id="card-list">${Render.songGroups(Store.getAllSongs())}</div>
         </section>`;
     }
 
@@ -274,6 +276,41 @@ const Render = {
   },
 
   /**
+   * 按系列分组陈列歌曲（同伴「愉终」反馈：首页分不清系列、要滑 8 屏才看到系列）。
+   * 组标题本身就是进系列页的入口（真 <a>，可 Tab、可点），标题右侧标该组首数。
+   * 组内按投稿日期升序（故事脉络顺序）；筛选后某组为空则整组隐藏；无系列的歌归入「其他单曲」。
+   */
+  songGroups(songs) {
+    const byDate = (a, b) => String(a.date || "").localeCompare(String(b.date || ""));
+    const groups = [];
+    SERIES.forEach((s) => {
+      const inSeries = songs.filter((song) => song.seriesId === s.id).sort(byDate);
+      if (inSeries.length) {
+        groups.push({ name: s.name, href: `#/series/${s.id}`, songs: inSeries });
+      }
+    });
+    const rest = songs.filter((song) => !song.seriesId).sort(byDate);
+    if (rest.length) groups.push({ name: "其他单曲", href: null, songs: rest });
+
+    return groups
+      .map(
+        (g) => `
+      <section class="group-block">
+        <h3 class="group-title">
+          ${
+            g.href
+              ? `<a class="group-link" href="${escapeHtml(g.href)}">📚 ${escapeHtml(g.name)}</a>`
+              : `<span class="group-link group-link-static">🎵 ${escapeHtml(g.name)}</span>`
+          }
+          <span class="group-count">${g.songs.length} 首</span>
+        </h3>
+        <div class="card-list">${g.songs.map(songCard).join("")}</div>
+      </section>`
+      )
+      .join("");
+  },
+
+  /**
    * 搜索结果列表（F4）：只重绘 #card-list，不整页刷新，输入框不丢焦点。
    * 无匹配时显示空状态（PRD D4：不清屏、不报错），并写明当前筛选条件（Day 12）。
    */
@@ -293,7 +330,7 @@ const Render = {
         </div>
       `;
     }
-    return songs.map(songCard).join("");
+    return Render.songGroups(songs);
   },
 
   /**
