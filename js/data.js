@@ -31,11 +31,12 @@ const SERIES = [
   {
     id: "wangxiang",
     name: "妄想症系列",
-    intro: "DELA（曲）× 雨狸（词）的九重连环剧：泠珞因挚友零羽的离去坠入重重妄想，历经坠落与上升，最终直面现实。序曲之后，正篇分坠落之章（一重~五重）与上升之章（六重~九重）；另有零羽的还原之章·角色歌《零重祈愿》。",
+    intro: "DELA（曲）× 雨狸（词）的九重连环剧：泠珞因挚友零羽的离去坠入重重妄想，历经坠落与上升，最终直面现实。序曲之后，正篇分坠落之章（一重~五重）与上升之章（六重~九重）；另有三首「还原之章」角色歌（三重恋爱·偶像颜语 / 泠重乞愿·泠珞 / 零重祈愿·零羽）与三首番外（自攻自受 / 妄想Paranoia / 妄想Reality）。",
     songIds: [
       "nova", "yichong-jiahai", "erzhong-biange", "sanzhong-ailian", "sizhong-zuinie",
       "wuzhong-kongdong", "liuzhong-buzhong", "qizhong-gubing", "bazhong-huigui", "jiuzhong-xianshi",
-      "lingchong-qiyuan",
+      "sanzhong-lianai", "linchong-qiyuan", "lingchong-qiyuan",
+      "zigongzishou", "wangxiang-paranoia", "wangxiang-reality",
     ],
     // 章节框架（系列总览页按此分组展示）：
     //   序曲 NOVA（先行概念曲）；坠落之章 = 一重~五重（五重为 b之章终曲，B站补档简介可证）；
@@ -45,9 +46,27 @@ const SERIES = [
       { name: "序曲", songIds: ["nova"] },
       { name: "坠落之章", songIds: ["yichong-jiahai", "erzhong-biange", "sanzhong-ailian", "sizhong-zuinie", "wuzhong-kongdong"] },
       { name: "上升之章", songIds: ["liuzhong-buzhong", "qizhong-gubing", "bazhong-huigui", "jiuzhong-xianshi"] },
-      { name: "角色歌（还原之章）", songIds: ["lingchong-qiyuan"] },
+      { name: "角色歌（还原之章）", songIds: ["sanzhong-lianai", "linchong-qiyuan", "lingchong-qiyuan"] },
+      { name: "番外", songIds: ["zigongzishou", "wangxiang-paranoia", "wangxiang-reality"] },
     ],
     // 来源：B站专栏 cv41416227 + 萌娘百科《九重现实》《八重回归》《七重痼病》 + B站补档简介 ｜ 录入 2026-09-26
+  },
+  {
+    id: "shuangxiang",
+    name: "双向系列",
+    intro: "JUSF周存（曲）× sya（词/绘）的「周黑亚」组合作品：洛天依、言和、乐正绫陷入一段被诅咒的情感与永无幸福的轮回。六首正篇是互相关联的五世结局（双向思念→双向跨越/单向宣战→双向幸福→双向监禁→双向遗忘），三首角色歌（逆向守护·洛天依 / 正向欺骗·乐正绫 / 单向苏醒·言和）剖白各自主角，特别篇《双向倾诉》给出轮回之外的另一种可能。",
+    songIds: [
+      "shuangxiang-sinian", "shuangxiang-kuayue", "danxiang-xuanzhan", "shuangxiang-xingfu", "shuangxiang-jianjin",
+      "shuangxiang-yiwang", "nixiang-shouhu", "zhengxiang-qipian", "danxiang-suxing", "shuangxiang-qingsu",
+    ],
+    chapters: [
+      { name: "正篇（五世轮回）", songIds: ["shuangxiang-sinian", "shuangxiang-kuayue", "danxiang-xuanzhan", "shuangxiang-xingfu", "shuangxiang-jianjin", "shuangxiang-yiwang"] },
+      { name: "角色歌", songIds: ["nixiang-shouhu", "zhengxiang-qipian", "danxiang-suxing"] },
+      { name: "特别篇", songIds: ["shuangxiang-qingsu"] },
+    ],
+    // 来源：百度百科《双向系列》、萌娘百科《双向系列》各曲条目 + B站投稿页（av850424 / av859925 / av869576 / BV19s411o7JZ / av3061232 / av985798 / av1139245）｜ 录入 2026-10-14
+    // ⚠ 求真务实：单向宣战/双向幸福/正向欺骗 三首乐正绫视角曲初由言和代唱，乐正绫声库发布后换源重调，除《双向遗忘》外仅收录于专辑《双向·轮回与幸福》，无重制投稿页；
+    //    双向监禁、正向欺骗、双向倾诉 未核实到公开B站投稿页，本站以 noBilibili 说明，不编造来源。
   },
 ];
 
@@ -541,6 +560,320 @@ const SONGS = [
     milestones: [
       { label: "投稿B站（av8815372）· 零羽的还原之章·角色歌", date: "2017-02-25" },
       { label: "传说曲 · 播放 183.51万（2022-01-08 达成）", date: "2022-01-08" },
+    ],
+    myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
+  },
+
+  // ============================================================
+  // 以下 5 首为 2026-10-14 补录的《妄想症》系列剩余曲目
+  // 来源：萌娘百科 / VCPedia《妄想症Paranoia》各曲条目 + B站补档链接（av4704894 / av3761912 / av6477673 / av8264026 / av17679245）｜ 录入 2026-10-14
+  // 规则：播放量未公开记录的一律标「待核」，不编造
+  // ============================================================
+  {
+    id: "sanzhong-lianai",
+    title: "三重恋爱",
+    singer: "言和",
+    author: "DELA（曲）· 雨狸（策划/词）",
+    date: "2016-02-05",
+    bilibili: "https://www.bilibili.com/video/av3761912",
+    badges: ["角色歌"],
+    intro: "对应「还原之章·偶像颜语」。现实中偶像颜语的成名曲，在小说中出现：颜语是第五音高中最叛逆的学生，毕业后被生活所迫提前出道；她从小就被贴上不符的标签、遭人议论，却意志坚定地用行动反抗世界对她的束缚。",
+    seriesId: "wangxiang",
+    panels: [
+      { caption: "颜语是第五音高中最叛逆的学生，外表张扬、不甘被定义。" },
+      { caption: "毕业后被生活所迫提前出道，成为现实中叛逆的偶像。" },
+      { caption: "从小被贴上不符的标签、遭人议论，她却意志坚定，用行动反抗世界对自己的束缚。" },
+    ],
+    milestones: [
+      { label: "投稿B站（av3761912）· 偶像颜语的角色歌（还原之章）", date: "2016-02-05" },
+    ],
+    myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
+  },
+  {
+    id: "linchong-qiyuan",
+    title: "泠重乞愿",
+    singer: "洛天依",
+    author: "DELA（曲）· 雨狸（策划/词）",
+    date: "2016-05-20",
+    bilibili: "https://www.bilibili.com/video/av4704894",
+    badges: ["角色歌", "传说曲"],
+    intro: "对应「还原之章·♮之章.泠珞」。泠珞的歌无人问津，甚至遭到抄袭；当她几乎对这个世界失去期待时，得到了仰慕的歌手零羽的理解与接纳，两人组建乐队、通过海选。然而零羽不告而别，泠珞陷入悲痛与空洞，开始怀疑自我价值，从而坠入妄想逃避现实。这是整系列妄想发生前、泠珞的现实开端。",
+    seriesId: "wangxiang",
+    panels: [
+      { caption: "泠珞的歌无人问津，甚至遭到抄袭，几乎对这个世界失去期待。" },
+      { caption: "她得到了仰慕的歌手零羽的理解与接纳，两人组建乐队、通过海选。" },
+      { caption: "然而零羽不告而别，泠珞陷入悲痛与空洞，开始怀疑自我价值——妄想由此而生。" },
+    ],
+    milestones: [
+      { label: "投稿B站（av4704894）· 泠珞的还原之章·角色歌", date: "2016-05-20" },
+      { label: "传说曲（具体达成日期待核）", date: "待核" },
+    ],
+    myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
+  },
+  {
+    id: "zigongzishou",
+    title: "自攻自受",
+    singer: "言和",
+    author: "崩坏（曲/编）· 雨狸（策划/词）· DELA（代投）",
+    date: "2016-10-01",
+    bilibili: "https://www.bilibili.com/video/av6477673",
+    badges: ["番外", "传说曲"],
+    intro: "对应「妄想世界·双颜语」。独立番外，不隶属任何一章；时间点在四重之后、六重之前，描绘加害者颜语与守护者颜语的厮杀之战。诡异又热血的曲调，展现二者对立冲突与矛盾和谐——也揭示了六重中加害者成功策反守护者的深层原因。",
+    seriesId: "wangxiang",
+    panels: [
+      { caption: "独立番外，时间线在四重与六重之间。" },
+      { caption: "加害者颜语与守护者颜语——同一个人的两面——展开厮杀。" },
+      { caption: "诡异又热血的曲调，揭示二者对立统一的矛盾本质，也藏着六重策反的伏笔。" },
+    ],
+    milestones: [
+      { label: "投稿B站（av6477673）· 番外篇（双颜语）", date: "2016-10-01" },
+      { label: "传说曲（具体达成日期待核）", date: "待核" },
+    ],
+    myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
+  },
+  {
+    id: "wangxiang-paranoia",
+    title: "妄想Paranoia",
+    singer: "洛天依、言和、乐正绫",
+    author: "DELA（曲）· 雨狸（策划/词）",
+    date: "2017-01-28",
+    bilibili: "https://www.bilibili.com/video/av8264026",
+    badges: ["番外"],
+    intro: "系列番外串烧：将各曲 Remix 并重调教的串烧作品，把七个原本风格节奏迥异的旋律连成一个整体重新编曲。",
+    seriesId: "wangxiang",
+    panels: [
+      { caption: "系列番外篇，一首 Remix 串烧作品。" },
+      { caption: "把七个原本风格、节奏都不同的旋律连在一起，当作一个整体重新编曲。" },
+    ],
+    milestones: [
+      { label: "投稿B站（av8264026）· 番外串烧", date: "2017-01-28" },
+    ],
+    myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
+  },
+  {
+    id: "wangxiang-reality",
+    title: "妄想Reality",
+    singer: "洛天依、言和、乐正绫",
+    author: "DELA（曲/编）· 雨狸（策划/词）",
+    date: "2017-12-27",
+    bilibili: "https://www.bilibili.com/video/av17679245",
+    badges: ["番外"],
+    intro: "系列番外篇，是《妄想Paranoia》的重填词版本（Reality 增加了还原之章、八重与九重的旋律），回避以往所有曲子用过的意象，呈现一种全新的意境。",
+    seriesId: "wangxiang",
+    panels: [
+      { caption: "系列番外篇，是《妄想Paranoia》的重填词版本。" },
+      { caption: "Reality 增加了还原之章、八重与九重的旋律，回避旧有意象，呈现全新意境。" },
+    ],
+    milestones: [
+      { label: "投稿B站（av17679245）· 番外重填词", date: "2017-12-27" },
+    ],
+    myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
+  },
+
+  // ============================================================
+  // 以下 10 首为 2026-10-14 新开《双向系列》（JUSF周存 × sya）全曲目
+  // 来源：百度百科《双向系列》、萌娘百科《双向系列》各曲条目 + B站投稿页（av850424 / av859925 / av869576 / BV19s411o7JZ / av3061232 / av985798 / av1139245）｜ 录入 2026-10-14
+  // 规则：未核实到公开投稿页的 3 首（双向监禁 / 正向欺骗 / 双向倾诉）以 noBilibili 说明，不编造来源
+  // ============================================================
+  {
+    id: "shuangxiang-sinian",
+    title: "双向思念",
+    singer: "洛天依、言和",
+    author: "JUSF周存（曲/词/编）· sya（绘/PV）",
+    date: "2013-11-26",
+    bilibili: "https://www.bilibili.com/video/av850424",
+    badges: ["正篇", "殿堂曲"],
+    intro: "双向系列第一世（首作）。洛天依与言和相遇、相恋，却因自觉身份卑微而放弃；言和误以为她不爱自己，为试探而假装爱上乐正绫。洛天依一时冲动杀害言和，悔恨中自语「若时间可以重来」，随即自杀——第一世化为梦境，轮回转入第二世。",
+    seriesId: "shuangxiang",
+    panels: [
+      { caption: "洛天依与言和相遇、相恋，却因自觉身份卑微而不敢接受。" },
+      { caption: "言和误以为她不爱自己，为试探而假装爱上乐正绫。" },
+      { caption: "洛天依冲动之下杀害言和，悔恨中自语「若时间可以重来」随即自杀——第一世化为梦境。" },
+    ],
+    milestones: [
+      { label: "投稿B站（av850424）· 系列第一世·首作", date: "2013-11-26" },
+    ],
+    myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
+  },
+  {
+    id: "shuangxiang-kuayue",
+    title: "双向跨越",
+    singer: "洛天依、言和",
+    author: "JUSF周存（曲/词/编）· sya（绘/PV）",
+    date: "2013-12-04",
+    bilibili: "https://www.bilibili.com/video/av859925",
+    badges: ["正篇", "殿堂曲"],
+    intro: "双向系列第二世（第一种结局）。剧情前半与《双向思念》相同，但洛天依举刀刺向言和时，被言和紧紧抱住、表白心意，两人幸福相守。然而《单向宣战》结局里《双向跨越》的CG被描红，表明这只是假结局；真正的第二世结局是《单向宣战》。",
+    seriesId: "shuangxiang",
+    panels: [
+      { caption: "第二世展开，前半与首作相同。" },
+      { caption: "洛天依举刀之时，言和紧紧抱住她、表白心意。" },
+      { caption: "两人幸福相守——但这是被《单向宣战》描红的假结局。" },
+    ],
+    milestones: [
+      { label: "投稿B站（av859925）· 系列第二世·第一种结局", date: "2013-12-04" },
+    ],
+    myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
+  },
+  {
+    id: "danxiang-xuanzhan",
+    title: "单向宣战",
+    singer: "言和",
+    author: "JUSF周存（曲/词/编/调）· sya（绘/PV）",
+    date: "2013-12-12",
+    bilibili: "https://www.bilibili.com/video/av869576",
+    badges: ["正篇", "殿堂曲"],
+    intro: "双向系列第二世 TRUE END（真正结局）。紧接《双向跨越》言和天依互表心意之后：乐正绫认定是洛天依抢走了深爱的言和，疯狂报复并将她引向自杀。因创作时乐正绫声库未发布，本曲初由言和代唱（乐正绫视角），声库发布后换源重调。",
+    seriesId: "shuangxiang",
+    panels: [
+      { caption: "第二世真正结局，紧接《双向跨越》之后。" },
+      { caption: "乐正绫认定洛天依抢走了言和，疯狂报复。" },
+      { caption: "乐正绫将洛天依引向自杀——「你毕竟给予过她从未感受过的温暖」。" },
+    ],
+    milestones: [
+      { label: "投稿B站（av869576）· 系列第二世·TRUE END", date: "2013-12-12" },
+    ],
+    myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
+  },
+  {
+    id: "shuangxiang-xingfu",
+    title: "双向幸福",
+    singer: "洛天依、言和",
+    author: "JUSF周存（曲/词/编/调）· sya（绘/PV）",
+    date: "2013-12-27",
+    bilibili: "https://www.bilibili.com/video/BV19s411o7JZ",
+    badges: ["正篇", "殿堂曲"],
+    intro: "双向系列第三世。建立在之前三作基础上：言和为试探洛天依是否爱他，与乐正绫佯装情侣后又抛弃她；乐正绫为复仇假扮言和离间洛天依。洛天依伤心欲自杀时，乐正绫不忍爱人伤心而悔悟，阻止了她并坦白，随即跳楼自杀。洛天依对言和的误会化解，两人重归于好。",
+    seriesId: "shuangxiang",
+    panels: [
+      { caption: "第三世，建立在前三作基础上。" },
+      { caption: "言和佯装与乐正绫相恋试探天依；乐正绫为复仇假扮言和离间天依。" },
+      { caption: "天依欲自杀时，乐正绫悔悟阻止并坦白，随即跳楼；两人误会化解、重归于好。" },
+    ],
+    milestones: [
+      { label: "投稿B站（BV19s411o7JZ）· 系列第三世", date: "2013-12-27" },
+    ],
+    myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
+  },
+  {
+    id: "shuangxiang-jianjin",
+    title: "双向监禁",
+    singer: "洛天依、言和",
+    author: "JUSF周存（曲/词/编/调）· sya（绘/PV）",
+    date: "2014-01-10",
+    noBilibili: "本站未核实到公开B站投稿页（仅收录于专辑《双向·轮回与幸福》），故不提供B站链接（不编造来源）",
+    badges: ["正篇", "殿堂曲"],
+    intro: "双向系列第四世/第五世。剧情一般认为与前作《双向幸福》无关，由第二世乐正绫在《单向宣战》结尾所想「如果时间可以重来」延续而来：洛天依亲手杀掉乐正绫后写信约言和到天台；言和发现后精神崩溃报警，被送进精神病院，洛天依因杀人被关进拘留所——「双向监禁」即一人入狱、一人入院。本曲黑化曲风与血腥画面，是系列点击量与收藏最高的曲目之一。",
+    seriesId: "shuangxiang",
+    panels: [
+      { caption: "时间轴位于言和与乐正绫假装恋爱的时期。" },
+      { caption: "洛天依杀掉乐正绫后写信约言和到天台。" },
+      { caption: "言和崩溃报警被送进精神病院，天依因杀人入狱——「双向监禁」。" },
+    ],
+    milestones: [
+      { label: "投稿（专辑《双向·轮回与幸福》）· 系列第四/五世", date: "2014-01-10" },
+    ],
+    myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
+  },
+  {
+    id: "shuangxiang-yiwang",
+    title: "双向遗忘",
+    singer: "洛天依、言和、乐正绫",
+    author: "JUSF周存（曲/词/编/调）· sya（绘/PV）",
+    date: "2015-10-15",
+    bilibili: "https://www.bilibili.com/video/av3061232",
+    badges: ["正篇", "传说曲"],
+    intro: "双向系列正篇收官之作（第九作），以61小时左右达成殿堂。延续系列悲剧美学与轮回主题：表天依夺走黑天依能力后，令自己和言和遗忘彼此、时间倒转回未犯错之前，选择不再相爱；苏醒前几世记忆的言和同时动用「重来」能力，试图结束轮回。作者称双向是「永远无法得到幸福的轮回」，但也说「一百个人有一百种解释」，本曲为开放式结局。",
+    seriesId: "shuangxiang",
+    panels: [
+      { caption: "正篇收官，轮回主题推向高潮。" },
+      { caption: "表天依令二人遗忘彼此、时间倒转，选择不再相爱。" },
+      { caption: "言和同时动用「重来」能力试图结束轮回——开放式结局。" },
+    ],
+    milestones: [
+      { label: "投稿B站（av3061232）· 系列正篇收官·传说曲", date: "2015-10-15" },
+      { label: "传说曲（殿堂用时约61小时）", date: "传说达成日待核" },
+    ],
+    myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
+  },
+  {
+    id: "nixiang-shouhu",
+    title: "逆向守护",
+    singer: "洛天依",
+    author: "JUSF周存（曲/词/编/调）· sya（绘）· Eating DF（PV）",
+    date: "2014-02-27",
+    bilibili: "https://www.bilibili.com/video/av985798",
+    badges: ["角色歌", "殿堂曲"],
+    intro: "双向系列第六作，洛天依的人物番外角色歌。以极快语速搭配存式高音与黑嗓，围绕洛天依的「双重人格」设定：白人格渴望守护、黑人格怂恿杀掉言和——「你是谁？我是你。」剧情与后续《单向苏醒》直接关联。",
+    seriesId: "shuangxiang",
+    panels: [
+      { caption: "洛天依的人物番外，剖白其双重人格。" },
+      { caption: "白人格渴望被拯救与守护，黑人格怂恿杀掉言和。" },
+      { caption: "「你是谁？——我是你。」黑白人格的对峙。" },
+    ],
+    milestones: [
+      { label: "投稿B站（av985798）· 洛天依番外角色歌", date: "2014-02-27" },
+    ],
+    myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
+  },
+  {
+    id: "zhengxiang-qipian",
+    title: "正向欺骗",
+    singer: "言和",
+    author: "JUSF周存（曲/词/编/调）· sya（绘/PV）",
+    date: "2014-03-28",
+    noBilibili: "本站未核实到公开B站投稿页（乐正绫视角曲，初由言和代唱，声库发布后仅收录于专辑《双向·轮回与幸福》），故不提供B站链接",
+    badges: ["角色歌", "殿堂曲"],
+    intro: "双向系列第七作，乐正绫的角色番外（初由言和代唱）。继承系列前作曲风，乐正绫以个人独白讲述自己的身世，歌词充满对个人世界的绝望与厌恶，也为前作埋下的情节伏笔作了解释。",
+    seriesId: "shuangxiang",
+    panels: [
+      { caption: "乐正绫的角色番外，以个人独白展开。" },
+      { caption: "讲述乐正绫的身世，充满对个人世界的绝望与厌恶。" },
+      { caption: "为前作埋下的情节伏笔作了解释。" },
+    ],
+    milestones: [
+      { label: "投稿（专辑《双向·轮回与幸福》）· 乐正绫番外角色歌", date: "2014-03-28" },
+    ],
+    myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
+  },
+  {
+    id: "danxiang-suxing",
+    title: "单向苏醒",
+    singer: "洛天依、言和",
+    author: "JUSF周存（曲/词/编/调）· sya（绘）",
+    date: "2014-05-22",
+    bilibili: "https://www.bilibili.com/video/av1139245",
+    badges: ["角色歌", "殿堂曲"],
+    intro: "双向系列第八作，言和的角色番外（非正作）。写言和向洛天依表白后，洛天依无法控制黑向人格「杀掉言和」的怂恿而选择自杀的悲伤故事（关于自杀或同归于尽存在争议）。采用系列一贯的悲伤曲调与黑暗曲风。",
+    seriesId: "shuangxiang",
+    panels: [
+      { caption: "言和的角色番外，非系列正作。" },
+      { caption: "言和表白后，洛天依的黑向人格怂恿「杀掉言和」。" },
+      { caption: "洛天依在黑白人格激烈斗争后选择自杀——悲伤结局（争议）。" },
+    ],
+    milestones: [
+      { label: "投稿B站（av1139245）· 言和番外角色歌", date: "2014-05-22" },
+    ],
+    myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
+  },
+  {
+    id: "shuangxiang-qingsu",
+    title: "双向倾诉",
+    singer: "洛天依、言和",
+    author: "JUSF周存（曲/词/编/调）· Aya、sya（绘）",
+    date: "2018-07-11",
+    noBilibili: "本站未核实到公开B站投稿页（特别篇，仅收录于专辑/官方渠道），故不提供B站链接",
+    badges: ["特别篇", "传说曲"],
+    intro: "双向系列第十作之特别篇（2018年，距前作近三年）。与「宙与埃」世界观有所联系，是系列的后续外传，呈现轮回交错命运下洛言两位主角可能出现的另一个结局。同时为2018年洛天依言和庆生会应援作品、存娘写给两位歌姬的第一首生日贺曲。殿堂用时2日2时4分。",
+    seriesId: "shuangxiang",
+    panels: [
+      { caption: "特别篇，系列时隔近三年再出新作。" },
+      { caption: "与「宙与埃」世界观联系，呈现轮回之下另一种可能的结局。" },
+      { caption: "洛天依言和庆生会应援曲，印证「双向永不完结」。" },
+    ],
+    milestones: [
+      { label: "投稿（2018-07-11）· 系列特别篇·传说曲", date: "2018-07-11" },
+      { label: "传说曲（殿堂用时2日2时4分）", date: "传说达成日待核" },
     ],
     myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
   },
