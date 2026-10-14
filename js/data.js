@@ -37,6 +37,7 @@ const SERIES = [
       "wuzhong-kongdong", "liuzhong-buzhong", "qizhong-gubing", "bazhong-huigui", "jiuzhong-xianshi",
       "sanzhong-lianai", "linchong-qiyuan", "lingchong-qiyuan",
       "zigongzishou", "wangxiang-paranoia", "wangxiang-reality",
+      "shichong-gaobie",
     ],
     // 章节框架（系列总览页按此分组展示）：
     //   序曲 NOVA（先行概念曲）；坠落之章 = 一重~五重（五重为 b之章终曲，B站补档简介可证）；
@@ -48,6 +49,7 @@ const SERIES = [
       { name: "上升之章", songIds: ["liuzhong-buzhong", "qizhong-gubing", "bazhong-huigui", "jiuzhong-xianshi"] },
       { name: "角色歌（还原之章）", songIds: ["sanzhong-lianai", "linchong-qiyuan", "lingchong-qiyuan"] },
       { name: "番外", songIds: ["zigongzishou", "wangxiang-paranoia", "wangxiang-reality"] },
+      { name: "十周年纪念曲", songIds: ["shichong-gaobie"] },
     ],
     // 来源：B站专栏 cv41416227 + 萌娘百科《九重现实》《八重回归》《七重痼病》 + B站补档简介 ｜ 录入 2026-09-26
   },
@@ -874,6 +876,33 @@ const SONGS = [
     milestones: [
       { label: "投稿（2018-07-11）· 系列特别篇·传说曲", date: "2018-07-11" },
       { label: "传说曲（殿堂用时2日2时4分）", date: "传说达成日待核" },
+    ],
+    myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
+  },
+
+  // ============================================================
+  // 以下为 2026-10-14 补录的《妄想症》十周年纪念曲（非正篇）
+  // 来源：VCPedia / 萌娘百科《十重告别》 https://vcpedia.cn/zh-cn/十重告别 ｜ 录入 2026-10-14
+  // 规则：BV号以 VCPedia 记载为准（BV1k3S7BkEag）；传说曲以 VCPedia 记载（第一首 DiffSinger 传说曲）
+  // ============================================================
+  {
+    id: "shichong-gaobie",
+    title: "十重告别 Farewell.",
+    singer: "洛天依、言和、乐正绫、双狐座",
+    author: "雨狸（策划/词）· DELA、崩坏Soviesty（曲）· 潜移默化、崩坏Soviesty（编）· 流绪、台风别打我手机（调）· POiSON（混）· Lune（曲绘）· owen-z（PV）",
+    date: "2025-11-28",
+    bilibili: "https://www.bilibili.com/video/BV1k3S7BkEag",
+    badges: ["十周年纪念曲", "传说曲"],
+    intro: "妄想症Paranoia系列十周年官方纪念曲（非正篇）。由洛天依、言和、乐正绫与雨狸录制的新声库「双狐座」共同演唱，串烧 remix 了《绝世丑角》《微观戏剧》《世界沉睡童话》《第一首歌》四首游戏主题曲，像角色们复盘自己的经历。引入第四面墙之外的「双狐座」元叙事视角，带领角色、创作者与听众共同回望整个系列，把苦痛与欢愉、虚构与真实都郑重收纳为继续「歌颂明天」的力量。第一首 DiffSinger 中文传说曲。",
+    seriesId: "wangxiang",
+    panels: [
+      { caption: "十周年纪念曲，串烧 remix 了系列四首游戏主题曲，像角色们复盘自己的经历。" },
+      { caption: "第四面墙之外的「双狐座」登场，带领角色、创作者与听众共同回望整个系列。" },
+      { caption: "把苦痛与欢愉、虚构与真实都收纳为继续「歌颂明天」的力量。" },
+    ],
+    milestones: [
+      { label: "投稿B站（BV1k3S7BkEag）· 妄想症十周年纪念曲", date: "2025-11-28" },
+      { label: "传说曲 · 第一首 DiffSinger 中文传说曲（2026-02-18 达成）", date: "2026-02-18" },
     ],
     myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
   },
