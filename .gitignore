@@ -35,3 +35,7 @@ build/
 Thumbs.db
 desktop.ini
 ~$*
+
+# ===== 本机工具临时诊断文件（AI 工作流产物，非项目文件）=====
+__*.txt
+__tmpdata.js
