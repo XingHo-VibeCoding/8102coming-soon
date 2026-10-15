@@ -15,14 +15,17 @@ const SERIES = [
     // —— 系列内部按「凡人 / 歌者」两组（萌娘百科、VCPedia 均按此划分）：
     //   凡人 = 洛天依视角，每条世界线里平凡的一生；歌者 = 乐正绫视角，在轮回中孤独歌唱的流浪歌手。
     // —— Day 14（2026-10-11）补录：同伴反馈「世末歌者系列不止一首」，由 1 首补到 8 首已投稿曲目。
-    // ⚠ 求真务实：系列「已知共 10 首」（萌娘百科），其中《礼物》《夏夜空》查无公开投稿页与投稿日期，
-    //    暂不录入，留待资料齐全再补。
+    // 系列「已知共 10 首」（萌娘百科）：凡人 7（夏风/世末积雨云/回音/hello&bye,days/凉雨/礼物/夏夜空）
+    // + 歌者 3（世末歌者/同归世界线/碎梦）。Day 15（2026-10-15）补齐最后 2 首《礼物》《夏夜空》：
+    //   两首均投稿于 5sing（B站无正式投稿页），按 AGENTS.md 一·六第5条以 noBilibili 说明，不编造链接。
+    //   礼物 2013-08-14 原版 / 2015-10-05 重置版（VCPedia《禮物》）；夏夜空 2014-09-08（VCPedia《夏夜空》）。
     songIds: [
       "xiafeng", "shimo-jiyuyun", "huiyin", "tonggui-shijiexian",
       "hello-bye-days", "shimo-song", "liangyu", "suimeng",
+      "liwu", "xiayekong",
     ],
     chapters: [
-      { name: "凡人（洛天依）", songIds: ["xiafeng", "shimo-jiyuyun", "huiyin", "hello-bye-days", "liangyu"] },
+      { name: "凡人（洛天依）", songIds: ["xiafeng", "liwu", "shimo-jiyuyun", "xiayekong", "huiyin", "hello-bye-days", "liangyu"] },
       { name: "歌者（乐正绫）", songIds: ["tonggui-shijiexian", "shimo-song", "suimeng"] },
     ],
     // 来源：萌娘百科《世末歌者》 https://mzh.moegirl.org.cn/世末歌者 ｜ 录入 2026-09-26
@@ -270,6 +273,53 @@ const SONGS = [
       { label: "Short 版发布（网易云 / B站音频，VOCALOID 声库）", date: "2017-10-29" },
       { label: "完整版投稿B站（BV1sKSSBKEK8）· 与《世末歌者》神话同日", date: "2026-04-05" },
       { label: "ACE殿堂曲（用时 14 时 44 分）", date: "2026-04-06 11:44" },
+    ],
+    myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
+  },
+  {
+    id: "liwu",
+    title: "礼物",
+    singer: "洛天依",
+    author: "COP",
+    date: "2013-08-14",
+    // ⚠ 求真务实：本曲投稿于 5sing（原版 2013-08-14 / 重置版 2015-10-05），B站无正式投稿页，故不写 bilibili、改 noBilibili 说明。
+    // 来源：VCPedia《禮物》 https://vcpedia.cn/zh-hant/%E7%A4%BC%E7%89%A9 ｜ 录入 2026-10-15
+    noBilibili: "本曲投稿于 5sing（原版 2013-08-14 / 重置版 2015-10-05），B站无正式投稿页，故不提供B站链接（不编造来源）",
+    badges: [],
+    intro: "一个试图守住本真的孩子，在枯槁而生涩的世界里什么都无法撼动，只能看着幼时的自己迫不及待地长大——这份湿漉漉的成长，是一份强人所难、签收便无法退换的礼物。",
+    seriesId: "shimo",
+    // —— 分镜（纯文案，暂无配图）：按 VCPedia 公开简介起草；配图留待 Day 15 第4步
+    panels: [
+      { caption: "孩子攥着不肯松手的本真，在灰扑扑的世界里笨拙地抵挡。" },
+      { caption: "枯槁而生涩的岁月里，什么都撼动不了，只有时间在悄悄挪移。" },
+      { caption: "幼时的自己迫不及待地长大——这份湿漉漉的成长，签收便无法退换。" },
+    ],
+    milestones: [
+      { label: "原版投稿 5sing", date: "2013-08-14" },
+      { label: "重置版投稿 5sing", date: "2015-10-05" },
+    ],
+    myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
+  },
+  {
+    id: "xiayekong",
+    title: "夏夜空",
+    singer: "洛天依",
+    author: "COP",
+    date: "2014-09-08",
+    // ⚠ 求真务实：本曲投稿于 5sing（2014-09-08），B站无正式投稿页，故不写 bilibili、改 noBilibili 说明。
+    // 来源：VCPedia《夏夜空》 https://vcpedia.cn/index.php?oldid=548857&title=%E5%A4%9C%E7%A9%BA&variant=zh-hk ｜ 录入 2026-10-15
+    noBilibili: "本曲投稿于 5sing（2014-09-08），B站无正式投稿页，故不提供B站链接（不编造来源）",
+    badges: [],
+    intro: "COP 较为抒情的早期作品：天依梦中有一片绚烂夜空与思念的人，「花火」「瞳孔」「苍穹」关系的两次转变串联全曲，写尽她对世界的浪漫幻想如何逐渐现实化，结尾转为对思念之人与儿时憧憬的追忆。",
+    seriesId: "shimo",
+    // —— 分镜（纯文案，暂无配图）：按 VCPedia 公开简介起草；配图留待 Day 15 第4步
+    panels: [
+      { caption: "天依梦见一片绚烂夏夜空，和那个思念的人。" },
+      { caption: "花火藉由瞳孔投影到苍穹，她对世界的浪漫幻想一次次转变。" },
+      { caption: "多日的阴雨之后，幻想褪色，只剩对故人与儿时憧憬的追忆。" },
+    ],
+    milestones: [
+      { label: "投稿 5sing（无B站正式投稿页）", date: "2014-09-08" },
     ],
     myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
   },

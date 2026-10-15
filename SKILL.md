@@ -84,7 +84,7 @@ description: 世末歌者（中V歌曲故事）站点的前端设计规则。改
 两个断点：**640px** 与 **480px**（`@media (max-width: 640px)` / `(max-width: 480px)`）。
 
 - **触控目标**：手机上所有可点元素高度 **≥ 44px**、宽度足够点中（导航 `.nav-link`、系列标签 `.card-series`、收藏按钮 `.fav-btn-card` 等）。
-  - ⚠️ **已知偏差（待修）**：`.card-series` 系列标签手机端实测高约 37px，未达 44px。修它属于独立任务，需先列入当天清单再做。
+  - ✅ **已达标（Day 15）**：`@media (max-width:480px)` 下，导航 `.nav-link`、系列标签 `.card-series`、收藏 `.fav-btn-card`、筛选 `.singer-chip`、分组入口 `.group-link`、面包屑 `.crumb`、按钮 `.btn`/`.btn-listen`、搜索框 `.search-input`、歌曲页收藏 `.listen-row .fav-btn` 均锁高 `min-height:44px`（真机 390px 实测 44–50px），零横向溢出、零控制台报错。
 - **输入框字号 ≥ 16px**：否则 iOS Safari 聚焦时会自动放大页面（`.search-input` 已设 16px）。
 - **不许横向溢出**：任意宽度下 `document.documentElement.scrollWidth == window.innerWidth`。
   长英文 / 长 URL 用 `overflow-wrap: anywhere` 兜底（`.about-block p`、`.about-link` 已加）。

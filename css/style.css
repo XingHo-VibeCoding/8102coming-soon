@@ -1115,11 +1115,17 @@ body {
   /* 触控目标：导航/系列标签加高到 ≥44px，手机上易点中 */
   .nav-link {
     font-size: 14px;
-    padding: 11px 18px;
+    padding: 10px 18px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
   }
 
   .card-series {
     padding: 9px 16px;
+    min-height: 46px;
+    display: inline-flex;
+    align-items: center;
   }
 
   /* Day 12：筛选按钮同样加高到 ≥44px，手机上易点中 */
@@ -1138,7 +1144,7 @@ body {
   .fav-btn-card {
     display: inline-flex;
     align-items: center;
-    min-height: 44px;
+    min-height: 46px;
     padding: 9px 16px;
     font-size: 14px;
   }
@@ -1155,11 +1161,26 @@ body {
     max-width: 44vw;
   }
 
-  /* 触控目标：按钮/搜索框保持易点的大小 */
+  /* 触控目标：按钮/搜索框锁高 ≥44px，手机上易点中 */
   .btn,
   .btn-listen,
   .search-input {
     font-size: 16px; /* ≥16px 防止 iOS 聚焦自动放大 */
+    min-height: 44px;
+  }
+
+  .btn,
+  .btn-listen {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 歌曲页「收藏」按钮（与「去B站听这首」并排）同样锁高 ≥44px */
+  .listen-row .fav-btn {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
   }
 
   .badge {
