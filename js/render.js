@@ -78,13 +78,15 @@ const Render = {
     return `<nav class="breadcrumb" aria-label="面包屑">${parts}</nav>`;
   },
 
-  /** 区块 1 🔥 热度榜：Top N，播放数为公开快照值（来源见 data.js heat 字段） */
+  /** 区块 1 🔥 站长推荐：Top N，展示里程碑/站长推荐语，不展示播放数字（B 方案） */
   hotList(songs) {
     if (!songs.length) return ""; // 无可靠数据时不渲染榜单，不编造
     const medals = ["🥇", "🥈", "🥉"];
     const rows = songs
       .map((song, i) => {
-        const h = song.heat;
+        const h = song.heat || {};
+        const milestone =
+          h.milestone || (song.badges && song.badges[0]) || "站内热门";
         return `
         <a class="hot-row reveal" href="#/song/${escapeHtml(song.id)}">
           <span class="hot-rank">${medals[i] || i + 1}</span>
@@ -93,17 +95,16 @@ const Render = {
             <span class="hot-sub">${escapeHtml(song.singer)}</span>
           </span>
           <span class="hot-plays">
-            <span class="hot-num">${h.plays} 万</span>
-            <span class="hot-asof">播放量 · 截至 ${escapeHtml(h.asOf)}</span>
+            <span class="hot-milestone">${escapeHtml(milestone)}</span>
           </span>
         </a>`;
       })
       .join("");
     return `
       <section class="hot-section">
-        <h2 class="section-title">🔥 热度榜</h2>
+        <h2 class="section-title">🔥 站长推荐</h2>
         <div class="hot-list">${rows}</div>
-        <p class="hot-note">数字取自 B 站公开播放量，日期为记录时间，<strong class="hot-note-em">不是实时数据</strong>；想看最新播放量请点进 B 站原曲页。查不到可靠数字的歌曲不参与排名。</p>
+        <p class="hot-note">以下为站长主观推荐，按站内影响力排序，<strong class="hot-note-em">不代表实时播放数据</strong>；想看最新播放量请点进 B 站原曲页。</p>
       </section>`;
   },
 

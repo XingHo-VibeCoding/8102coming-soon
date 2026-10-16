@@ -285,14 +285,12 @@ body {
   flex-shrink: 0;
 }
 
-.hot-num {
-  font-size: 18px;
+.hot-milestone {
+  font-size: 14px;
   color: var(--accent, #7aa2ff);
-}
-
-.hot-asof {
-  font-size: 13px;
-  color: var(--text-dim);
+  text-align: right;
+  max-width: 210px;
+  line-height: 1.45;
 }
 
 .hot-note {
@@ -1095,7 +1093,7 @@ body {
   }
 
   .section-title {
-    font-size: 19px;
+    font-size: 22px;
   }
 
   .milestone-label {
@@ -1190,6 +1188,6 @@ body {
 
   .hot-rank { font-size: 20px; width: 34px; }
   .hot-title { font-size: 15px; }
-  .hot-num { font-size: 16px; }
+  .hot-milestone { font-size: 14px; }
   .hot-plays { padding-left: 48px; }
 }
