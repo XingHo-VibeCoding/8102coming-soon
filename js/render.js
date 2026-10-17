@@ -30,7 +30,7 @@ const Render = {
           <h2 class="section-title">🎵 全部歌曲</h2>
           ${Render.singerFilterBar("")}
           <p class="filter-status" id="filter-status" role="status">${Render.filterStatusText("", "", Store.getAllSongs().length)}</p>
-          <div class="card-list" id="card-list">${Render.songGroups(Store.getAllSongs())}</div>
+          <div class="card-list" id="card-list">${Render.songGroups(Store.getAllSongs(), { collapsed: true })}</div>
         </section>`;
     }
 
@@ -278,10 +278,13 @@ const Render = {
 
   /**
    * 按系列分组陈列歌曲（同伴「愉终」反馈：首页分不清系列、要滑 8 屏才看到系列）。
-   * 组标题本身就是进系列页的入口（真 <a>，可 Tab、可点），标题右侧标该组首数。
+   * 组标题本身就是进系列页的入口（真 <a>，可 Tab、可点），标题右侧是该组首数 + 折叠开关。
    * 组内按投稿日期升序（故事脉络顺序）；筛选后某组为空则整组隐藏；无系列的歌归入「其他单曲」。
+   * opts.collapsed=true 时各组默认收起（Day 17：首页过长 → 默认折叠到 ~3 屏，点开关再展开），
+   * 组标题的系列链接始终可点进系列页，不受折叠影响。
    */
-  songGroups(songs) {
+  songGroups(songs, opts = {}) {
+    const collapsed = opts.collapsed === true;
     const byDate = (a, b) => String(a.date || "").localeCompare(String(b.date || ""));
     const groups = [];
     SERIES.forEach((s) => {
@@ -295,15 +298,20 @@ const Render = {
 
     return groups
       .map(
-        (g) => `
-      <section class="group-block">
+        (g, i) => `
+      <section class="group-block${collapsed ? " is-collapsed" : ""}" data-group-index="${i}" data-group-name="${escapeHtml(g.name)}">
         <h3 class="group-title">
           ${
             g.href
               ? `<a class="group-link" href="${escapeHtml(g.href)}">📚 ${escapeHtml(g.name)}</a>`
               : `<span class="group-link group-link-static">🎵 ${escapeHtml(g.name)}</span>`
           }
-          <span class="group-count">${g.songs.length} 首</span>
+          <span class="group-meta">
+            <span class="group-count">${g.songs.length} 首</span>
+            <button class="group-toggle" type="button" aria-expanded="${!collapsed}" aria-label="${collapsed ? "展开" : "收起"}「${escapeHtml(g.name)}」分组（共 ${g.songs.length} 首）">
+              <span class="group-toggle-icon" aria-hidden="true"></span>
+            </button>
+          </span>
         </h3>
         <div class="card-list">${g.songs.map(songCard).join("")}</div>
       </section>`

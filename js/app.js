@@ -231,15 +231,35 @@ function setupFilters() {
     apply();
   });
 
-  // 空状态的「清空筛选条件」按钮由列表容器委托（容器随首页重建，不会累积监听）
+  // 列表容器委托（容器随首页重建，不会累积监听）：清空按钮 + 分组折叠开关
   list.addEventListener("click", (e) => {
-    if (!e.target.closest("#clear-filters")) return;
-    state.singer = "";
-    state.keyword = "";
-    input.value = "";
-    syncChips();
-    apply();
-    input.focus();
+    // 空状态「清空筛选条件」按钮
+    const clearBtn = e.target.closest("#clear-filters");
+    if (clearBtn) {
+      state.singer = "";
+      state.keyword = "";
+      input.value = "";
+      syncChips();
+      apply();
+      input.focus();
+      return;
+    }
+    // 分组折叠/展开开关（Day 17）：点开关只改该组的 .is-collapsed，不整页重绘
+    const toggle = e.target.closest(".group-toggle");
+    if (toggle) {
+      const block = toggle.closest(".group-block");
+      if (block) {
+        const nowCollapsed = !block.classList.contains("is-collapsed");
+        block.classList.toggle("is-collapsed", nowCollapsed);
+        toggle.setAttribute("aria-expanded", String(!nowCollapsed));
+        const name = block.dataset.groupName || "分组";
+        toggle.setAttribute(
+          "aria-label",
+          `${nowCollapsed ? "展开" : "收起"}「${name}」分组`
+        );
+      }
+      return;
+    }
   });
 }
 
