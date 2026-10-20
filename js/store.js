@@ -30,16 +30,62 @@ function validateSong(song) {
 // 收藏的本地存储键（Day 11）：纯静态站无服务器，收藏先记在本机浏览器里
 const FAV_KEY = "zvf:favorites";
 
+// ---- Day 17：云端读取接口（Supabase PostgREST RPC，等价课程的「云函数 GET 读接口」）----
+// 设计依据本文件头部注释：「方案 B（云后端）时只改本文件内部实现，页面代码零改动」。
+// 接口契约见仓库根目录 api-contract.md（GET /api/songs 由 get_songs RPC 承担）。
+// publishable key 是公开安全的前端面密钥，本就该出现在客户端代码里。
+const CLOUD_API = {
+  url: "https://wtqzywartwuyzeiiqlyb.supabase.co",
+  anon: "sb_publishable_0NtBaZMaYbW605haSsqhUA_rifL8HCO",
+};
+
 const Store = {
-  /** 全部歌曲（F1 首页卡片列表用） */
+  // Day 17：云端歌曲缓存；null = 尚未加载，回落静态 SONGS
+  _songs: null,
+  _loadPromise: null,
+
+  /** 全部歌曲（F1 首页卡片列表用）。Day 17 起优先返回云端真实数据，失败回落静态 SONGS。 */
   getAllSongs() {
-    return SONGS.filter(validateSong);
+    return (Store._songs || SONGS).filter(validateSong);
   },
 
   /** 按 id 取单首歌（F3 漫剧页用）；找不到返回 null */
   getSongById(id) {
-    const song = SONGS.find((s) => s.id === id);
+    const song = (Store._songs || SONGS).find((s) => s.id === id);
     return song && validateSong(song) ? song : null;
+  },
+
+  /**
+   * Day 17：从云端读取真实歌曲数据（第一条 GET 读接口）。
+   * 用课程要求的统一返回形状 {ok,data,error}；任何失败都回落静态 SONGS，不让页面崩。
+   * 结果缓存到 _songs，重复调用复用同一次请求。
+   */
+  loadSongs() {
+    if (Store._loadPromise) return Store._loadPromise;
+    Store._loadPromise = (async () => {
+      try {
+        const r = await fetch(`${CLOUD_API.url}/rest/v1/rpc/get_songs`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: CLOUD_API.anon,
+            Authorization: "Bearer " + CLOUD_API.anon,
+          },
+          body: "{}",
+        });
+        const j = await r.json();
+        if (j && j.ok === true && Array.isArray(j.data) && j.data.length) {
+          Store._songs = j.data;
+          console.info(`[store] 已从云端加载 ${Store._songs.length} 首真实歌曲`);
+        } else {
+          console.warn("[store] 云端返回异常，回落静态数据：", j);
+        }
+      } catch (e) {
+        console.warn("[store] 云端读取失败，回落静态数据：", e);
+      }
+      return Store._songs;
+    })();
+    return Store._loadPromise;
   },
 
   /** 全部系列，附收录歌曲数（F2 系列列表用） */

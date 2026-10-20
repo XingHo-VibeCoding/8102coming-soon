@@ -120,21 +120,24 @@ function renderHome(app) {
   // 2. 数据就绪后切换到「成功」；数据层异常或为空则切「错误」
   homeLoadTimer = setTimeout(() => {
     homeLoadTimer = null;
-    try {
-      const songs = Store.getAllSongs();
-      if (!songs.length) {
-        app.innerHTML = Render.homePage("error"); // 数据为空 = 错误态，不用兜底页蒙混
-        console.error("[app] 数据为空：SONGS 校验后无有效歌曲");
-      } else {
-        app.innerHTML = Render.homePage("success");
-        setupFilters();
+    // Day 17：等到云端读取落地（成功或失败都 resolve），再决定渲染真实数据还是回落静态
+    Store.loadSongs().then(() => {
+      try {
+        const songs = Store.getAllSongs();
+        if (!songs.length) {
+          app.innerHTML = Render.homePage("error"); // 数据为空 = 错误态，不用兜底页蒙混
+          console.error("[app] 数据为空：SONGS 校验后无有效歌曲");
+        } else {
+          app.innerHTML = Render.homePage("success");
+          setupFilters();
+        }
+      } catch (err) {
+        console.error("[app] 数据层异常，首页进入错误态：", err);
+        app.innerHTML = Render.homePage("error");
       }
-    } catch (err) {
-      console.error("[app] 数据层异常，首页进入错误态：", err);
-      app.innerHTML = Render.homePage("error");
-    }
-    setActiveNav();
-    setupRevealAnimation();
+      setActiveNav();
+      setupRevealAnimation();
+    });
   }, 400);
 }
 
@@ -358,6 +361,7 @@ async function handleFavorite(el) {
 
 window.addEventListener("hashchange", route);
 window.addEventListener("DOMContentLoaded", () => {
+  Store.loadSongs(); // Day 17：首屏前就发起云端读取，首页成功态会等到它落地
   route();
 
   // 卡片内「系列标签」跳转（B4 反向跳回）：用事件委托实现，
