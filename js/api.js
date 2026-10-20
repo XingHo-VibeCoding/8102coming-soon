@@ -14,13 +14,18 @@ const API_BASE = {
 
 /**
  * 统一 RPC 调用：POST 到 Supabase PostgREST，返回 { ok, data, error }。
- * 契约规定所有接口都是这个形状；HTTP / 网络 / 格式异常也在这里转成中文，
- * 让上层（store.js）永远只需要判断 ok。
+ * 契约规定所有接口都是这个形状；异常也在这里转成中文，让上层（store.js）永远只需要判断 ok。
+ *
+ * Day 23 —— 错误分三类，各给人能看懂的话（改前只有一个兜底「服务返回异常」，
+ * 会把服务端 500 谎报成网络问题，排查时会被带偏）：
+ *   ① 网络/接口错：请求根本没发出去（断网、DNS 失败、连接被重置）
+ *   ② 服务端错：HTTP 4xx/5xx，按状态码说清是权限、不存在、太频繁还是宕机
+ *   ③ 业务错：HTTP 200 但 ok:false（参数缺失、重复、记录不存在等），用后端的中文原因
  */
 async function callRpc(name, body, fallbackError) {
-  let j = null;
+  let res;
   try {
-    const r = await fetch(`${API_BASE.url}/rest/v1/rpc/${name}`, {
+    res = await fetch(`${API_BASE.url}/rest/v1/rpc/${name}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -29,14 +34,50 @@ async function callRpc(name, body, fallbackError) {
       },
       body: JSON.stringify(body || {}),
     });
-    j = await r.json();
   } catch (e) {
-    return { ok: false, data: null, error: "网络或服务不可用，请稍后再试" };
+    // ① 网络层失败：连接没建起来
+    return { ok: false, data: null, error: "网络连不上服务，请检查网络后再试" };
   }
+
+  let j = null;
+  try {
+    j = await res.json();
+  } catch (e) {
+    j = null;
+  }
+
+  // ② 服务端错误：按状态码区分，不把锅甩给网络
+  if (!res.ok) {
+    if (res.status === 401 || res.status === 403) {
+      return { ok: false, data: null, error: "没有访问权限（密钥无效或权限不足），请联系站长" };
+    }
+    if (res.status === 404) {
+      return { ok: false, data: null, error: "接口不存在，可能是地址写错了" };
+    }
+    if (res.status === 429) {
+      return { ok: false, data: null, error: "请求太频繁了，请等一会儿再试" };
+    }
+    if (res.status >= 500) {
+      return { ok: false, data: null, error: "服务端出错了，请稍后再试（错误已记录，站长会处理）" };
+    }
+    return { ok: false, data: null, error: fallbackError || "请求没有成功，请稍后再试" };
+  }
+
+  // ③ 格式不合契约：当成服务端异常，不把半截数据交给页面
   if (!j || typeof j.ok !== "boolean") {
-    return { ok: false, data: null, error: fallbackError || "服务返回异常，请稍后再试" };
+    return { ok: false, data: null, error: fallbackError || "服务返回的内容看不懂，请稍后再试" };
   }
   return j;
+}
+
+/** 用户输入错（第三类）：发请求之前先挡住，并告诉用户该改哪里 */
+function hasText(v) {
+  return typeof v === "string" && v.trim() !== "";
+}
+
+/** 统一的「参数不合格」响应，形状与契约一致 */
+function badInput(message) {
+  return Promise.resolve({ ok: false, data: null, error: message });
 }
 
 const Api = {
@@ -47,11 +88,15 @@ const Api = {
 
   /** GET /api/favorites?uid= —— 我的收藏 id 列表 */
   getFavorites(uid) {
+    if (!hasText(uid)) return badInput("缺少用户标识（uid），无法读取收藏");
     return callRpc("get_favorites", { uid }, "读取收藏失败，请稍后再试");
   },
 
   /** POST /api/favorites —— 新增一条收藏 */
   addFavorite(uid, songId) {
+    if (!hasText(uid)) return badInput("缺少用户标识（uid），无法收藏");
+    if (!hasText(songId)) return badInput("缺少歌曲 id，无法收藏");
+    if (songId.length > 64) return badInput("歌曲 id 太长（最多 64 个字符），请检查数据");
     return callRpc("add_favorite", { uid, song_id: songId }, "收藏失败，请稍后再试");
   },
 };

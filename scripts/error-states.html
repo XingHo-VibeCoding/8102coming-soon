@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 23 · 三类错误提示实测台</title>
+<style>
+  :root {
+    --ink: #1b1b1f;
+    --ink-2: #5b5b66;
+    --line: #e3e3e8;
+    --bg: #fafaf7;
+    --card: #fff;
+    --ok: #1f7a4d;
+    --bad: #b3261e;
+    --accent: #7a5cff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 28px 32px 48px;
+    background: var(--bg); color: var(--ink);
+    font: 14px/1.7 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  h1 { font-size: 20px; margin: 0 0 6px; letter-spacing: .2px; }
+  .sub { color: var(--ink-2); font-size: 13px; margin-bottom: 22px; }
+  .sub code { background: #efeff3; padding: 1px 5px; border-radius: 4px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 16px 18px 18px;
+    display: flex; flex-direction: column; min-height: 300px;
+  }
+  .card h2 { font-size: 14px; margin: 0 0 4px; }
+  .card .how { font-size: 12px; color: var(--ink-2); margin-bottom: 12px; min-height: 54px; }
+  .card .how code { background: #f2f2f6; padding: 0 4px; border-radius: 3px; }
+  button {
+    font: inherit; font-size: 13px; cursor: pointer;
+    border: 1px solid var(--accent); background: #fff; color: var(--accent);
+    border-radius: 8px; padding: 7px 12px; margin-bottom: 12px;
+  }
+  button:hover { background: #f6f4ff; }
+  .out { flex: 1; border-top: 1px dashed var(--line); padding-top: 12px; font-size: 13px; }
+  .out .row { margin-bottom: 6px; }
+  .out .k { color: var(--ink-2); }
+  .msg { font-size: 14px; font-weight: 600; margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: #fff5f4; color: var(--bad); }
+  .msg.ok { background: #f1f8f4; color: var(--ok); }
+  .raw { font: 12px/1.5 Consolas, monospace; color: #8a8a95; word-break: break-all; }
+  .foot { margin-top: 20px; font-size: 12px; color: var(--ink-2); }
+</style>
+</head>
+<body>
+  <h1>三类错误提示实测台</h1>
+  <div class="sub">
+    Day 23 验收用页面，不是站点功能页。三次点击都走 <code>js/api.js</code> 里真实的 <code>callRpc()</code>，
+    只把「请求打到哪」按需改掉；文案全部来自前端代码，不是这里手写的。
+  </div>
+
+  <div class="grid" id="grid">
+    <div class="card" data-k="input">
+      <h2>① 用户输入错</h2>
+      <div class="how">调用 <code>Api.addFavorite("", "xiafeng")</code>：uid 为空，请求不会发出去，前端先挡住。</div>
+      <button id="btn-input">触发</button>
+      <div class="out" id="out-input"><div class="k">等待触发…</div></div>
+    </div>
+
+    <div class="card" data-k="net">
+      <h2>② 网络 / 接口错</h2>
+      <div class="how">把接口地址临时指到 <code>http://127.0.0.1:9</code>（本机没服务在听），连接直接失败。</div>
+      <button id="btn-net">触发</button>
+      <div class="out" id="out-net"><div class="k">等待触发…</div></div>
+    </div>
+
+    <div class="card" data-k="server">
+      <h2>③ 服务端错</h2>
+      <div class="how">本机到 Supabase 的公网链路不通，没法对真服务触发 5xx；这里把接口地址临时指到本地一个<b>只回 HTTP 500</b> 的假服务端——500 是真的，走的还是 <code>api.js</code> 真实的 500 分支。</div>
+      <button id="btn-server">触发</button>
+      <div class="out" id="out-server"><div class="k">等待触发…</div></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    判定标准：三张卡里出现的都是中文人话，没有英文堆栈、没有白屏、没有把服务端错误说成网络错误。
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    function paint(id, rows, msg, kind) {
+      const box = document.getElementById(id);
+      box.innerHTML = rows.map(r => `<div class="row"><span class="k">${r[0]}：</span>${r[1]}</div>`).join("")
+        + `<div class="msg ${kind === "ok" ? "ok" : ""}">${msg}</div>`;
+    }
+
+    // ① 输入错：不发请求
+    document.getElementById("btn-input").addEventListener("click", async () => {
+      const r = await Api.addFavorite("", "xiafeng");
+      paint("out-input", [["HTTP", "无（请求未发出）"], ["ok", String(r.ok)]], r.error);
+    });
+
+    // ② 网络错：把 API_BASE.url 指到本机空端口，走真实的连接失败
+    document.getElementById("btn-net").addEventListener("click", async () => {
+      const original = API_BASE.url;
+      API_BASE.url = "http://127.0.0.1:9";
+      let r, err = "";
+      try {
+        r = await callRpc("get_songs", {}, "读取歌曲失败，请稍后再试");
+      } catch (e) {
+        err = String(e);
+      } finally {
+        API_BASE.url = original;
+      }
+      const rows = [
+        ["实际请求", "http://127.0.0.1:9/rest/v1/rpc/get_songs"],
+        ["结果", err ? "抛出异常" : "ok=" + (r && r.ok)],
+      ];
+      paint("out-net", rows, (r && r.error) || err || "（无返回）");
+    });
+
+    // ③ 服务端错：把地址指到本地假服务（真 500 + JSON），走真实的 5xx 分支
+    document.getElementById("btn-server").addEventListener("click", async () => {
+      const original = API_BASE.url;
+      API_BASE.url = "http://127.0.0.1:8972/__mock";
+      let r, err = "";
+      try {
+        r = await callRpc("get_songs", {}, "读取歌曲失败，请稍后再试");
+      } catch (e) {
+        err = String(e);
+      } finally {
+        API_BASE.url = original;
+      }
+      paint("out-server", [
+        ["实际请求", "http://127.0.0.1:8972/__mock/rest/v1/rpc/get_songs"],
+        ["HTTP 状态", "500（服务端内部错误）"],
+        ["ok", String(r && r.ok)],
+      ], (r && r.error) || err || "（无返回）");
+    });
+
+    // 截图用：?only=input|net|server 只留一张卡；?auto=1 自动触发，省掉手点
+    (function () {
+      const q = new URLSearchParams(location.search);
+      const only = q.get("only");
+      const grid = document.getElementById("grid");
+      if (only) {
+        document.querySelectorAll(".card").forEach(c => {
+          if (c.dataset.k !== only) c.remove();
+        });
+        grid.style.gridTemplateColumns = "1fr";
+        grid.style.maxWidth = "760px";
+      }
+      if (q.get("auto") === "1") {
+        const btn = { input: "btn-input", net: "btn-net", server: "btn-server" };
+        (only ? [only] : ["input", "net", "server"]).forEach(k => {
+          document.getElementById(btn[k]).click();
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

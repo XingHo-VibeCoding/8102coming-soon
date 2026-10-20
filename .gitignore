@@ -1,4 +1,6 @@
 # ===== 机密与凭据（永远不上传）=====
+# 注意：下面几条很宽，会误伤 .env.example（字段清单示例，必须入库）和
+# 文件名带 secret 的文档/截图，所以末尾用感叹号规则放行。
 .env
 .env.*
 *.env
@@ -12,6 +14,8 @@ credentials.*
 *secret*
 token.txt
 config-private.json
+!.env.example
+!**/*secretscan*
 
 # ===== 依赖目录 =====
 node_modules/
