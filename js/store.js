@@ -27,9 +27,20 @@ function validateSong(song) {
   return true;
 }
 
+/**
+ * Day 20：把「这一刻」格式化成 `2026-10-20 19:52:31`（本地时区）。
+ * 用作接口的真实抓取时间。故意不用 toLocaleString——各浏览器格式不一致，
+ * 截图里的时间会长得不一样，验收时容易看错。
+ */
+function nowText() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ` +
+    `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
 // 收藏的本地存储键（Day 11）：云端读不到时的回落备份，不再是唯一数据源
 const FAV_KEY = "zvf:favorites";
-
 // 本机用户标识的存储键（Day 18）：课程不登录、不建用户表，
 // 收藏按「本机生成的 uid」区分，首次访问时生成并一直复用。
 const UID_KEY = "zvf:uid";
@@ -42,6 +53,12 @@ const Store = {
   // Day 17：云端歌曲缓存；null = 尚未加载，回落静态 SONGS
   _songs: null,
   _loadPromise: null,
+
+  // Day 20：记录「这次数据到底从哪来的」，给云端数据检查台和首页兜底提示用。
+  //   source: "none" 还没请求过 / "cloud" 云端真实数据 / "local" 本地 data.js 兜底
+  //   apiCount: 接口原样返回的条数（未经校验）
+  //   ms: 本次请求耗时；at: 请求完成的真实时刻；error: 失败原因（成功时为空）
+  _meta: { source: "none", apiCount: 0, ms: 0, at: "", error: "" },
 
   // Day 18：云端收藏缓存；null = 尚未加载，回落本地备份
   _favs: null,
@@ -66,21 +83,58 @@ const Store = {
   loadSongs() {
     if (Store._loadPromise) return Store._loadPromise;
     Store._loadPromise = (async () => {
+      const t0 = performance.now();
       try {
         // Day 19：调用数据访问层，不再在这里拼请求
         const j = await Api.getSongs();
+        const ms = Math.round(performance.now() - t0);
         if (j && j.ok === true && Array.isArray(j.data) && j.data.length) {
           Store._songs = j.data;
-          console.info(`[store] 已从云端加载 ${Store._songs.length} 首真实歌曲`);
+          // Day 20：记下「云端成功」，检查台与首页据此显示数据来源
+          Store._meta = {
+            source: "cloud",
+            apiCount: j.data.length,
+            ms,
+            at: nowText(),
+            error: "",
+          };
+          console.info(`[store] 已从云端加载 ${Store._songs.length} 首真实歌曲（${ms}ms）`);
         } else {
+          Store._meta = {
+            source: "local",
+            apiCount: 0,
+            ms,
+            at: nowText(),
+            error: (j && j.error) || "云端返回异常（ok 不为 true 或 data 为空）",
+          };
           console.warn("[store] 云端返回异常，回落静态数据：", j);
         }
       } catch (e) {
+        Store._meta = {
+          source: "local",
+          apiCount: 0,
+          ms: Math.round(performance.now() - t0),
+          at: nowText(),
+          error: (e && e.message) || "网络异常",
+        };
         console.warn("[store] 云端读取失败，回落静态数据：", e);
       }
       return Store._songs;
     })();
     return Store._loadPromise;
+  },
+
+  /**
+   * Day 20：当前页面用的是哪份数据——"cloud"（云端真实）/ "local"（本地兜底）/ "none"（还没请求）。
+   * 首页用它决定是否亮出「云端不可用」提示条；检查台直接展示同一个值。
+   */
+  getDataSource() {
+    return Store._meta.source;
+  },
+
+  /** Day 20：加载元信息的只读快照（检查台渲染用） */
+  getLoadMeta() {
+    return { ...Store._meta };
   },
 
   /** 全部系列，附收录歌曲数（F2 系列列表用） */

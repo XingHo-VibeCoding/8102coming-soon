@@ -50,6 +50,14 @@ const Render = {
             />
           </div>
         </header>
+        ${/* Day 20：云端接口失败时页面会静默回落本地 data.js，界面上一模一样——
+             这正是「以为接了真库、其实还在用备份」的坑。所以这里必须显式喊一声。 */ ""}
+        ${status === "success" && Store.getDataSource() === "local"
+          ? `<p class="data-warn" role="status">
+               ⚠️ 云端接口暂时不可用，当前展示的是<strong>站内本地备份数据</strong>，可能不是最新的库数据。
+               <a class="data-warn-link" href="#/status">查看数据检查台</a>
+             </p>`
+          : ""}
         <div id="home-content">${content}</div>
         <footer class="page-footer">🎵 中V歌曲故事 · 由 vibe coding 学习营 · 世末歌者工作室出品</footer>
       </main>
@@ -472,6 +480,133 @@ const Render = {
           <p>源码仓库：<a class="about-link" href="https://github.com/XingHo-VibeCoding/8102coming-soon" target="_blank" rel="noopener noreferrer">XingHo-VibeCoding/8102coming-soon</a></p>
         </section>
         <footer class="page-footer">🎵 中V歌曲故事 · 由 vibe coding 学习营 · 世末歌者工作室出品</footer>
+      </main>
+    `;
+  },
+
+  /**
+   * 云端数据检查台（Day 20）：把「数据是不是真的来自云端」变成一眼能看懂的一页。
+   * 输入 `model`：
+   *   {} 或 null            → loading 骨架
+   *   { apiOk, apiCount, passedCount, ms, at, error, source, probeTitle }
+   * 这一页不打广告、不放导航入口，只做验收取证（课程 Day 20 的「检查台」）。
+   */
+  statusPage(model, status) {
+    const state = status || (model && model.apiOk ? "success" : "error");
+    const apiUrl = `${API_BASE.url}/rest/v1/rpc/get_songs`;
+
+    if (state === "loading") {
+      return `
+        <main class="home-page status-page" data-view-state="loading">
+          <header class="home-header">
+            <h1 class="home-title">云端数据检查台</h1>
+            <p class="home-sub">正在真实请求云端接口，请稍候…</p>
+          </header>
+          <div class="status-skeleton" aria-hidden="true">
+            <div class="sk-card"></div>
+            <div class="sk-card"></div>
+            <div class="sk-card"></div>
+          </div>
+        </main>
+      `;
+    }
+
+    const m = model || {};
+    const ok = !!m.apiOk;
+    const removed = Math.max(0, (m.apiCount || 0) - (m.passedCount || 0));
+    const sourceText =
+      m.source === "cloud"
+        ? "云端数据库（真实数据）"
+        : m.source === "local"
+        ? "本地 data.js（兜底数据，不是最新的库数据）"
+        : "尚未请求";
+
+    const badge = ok
+      ? `<span class="status-badge status-badge--ok">● 接口正常</span>`
+      : `<span class="status-badge status-badge--bad">● 接口异常</span>`;
+
+    const errorBlock = ok
+      ? ""
+      : `<p class="status-error" role="alert">失败原因：${escapeHtml(m.error || "未知错误")}</p>
+         <p><button type="button" class="btn" data-status-retry>重新检测</button></p>`;
+
+    return `
+      <main class="home-page status-page" data-view-state="${ok ? "success" : "error"}">
+        <header class="home-header">
+          <h1 class="home-title">云端数据检查台</h1>
+          <p class="home-sub">这一页只做一件事：让你亲眼确认页面上的数据真的来自云端数据库。</p>
+        </header>
+
+        <section class="about-block reveal">
+          <h2 class="section-title">① 链路状态</h2>
+          <p class="status-badge-row">${badge}</p>
+          <dl class="status-list">
+            <div class="status-row">
+              <dt>接口地址</dt>
+              <dd class="status-url">${escapeHtml(apiUrl)}</dd>
+            </div>
+            <div class="status-row">
+              <dt>返回结果</dt>
+              <dd>${ok ? `ok: true · 取到 ${m.apiCount} 条` : "没有拿到有效数据"}</dd>
+            </div>
+            <div class="status-row">
+              <dt>响应耗时</dt>
+              <dd>${escapeHtml(String(m.ms))} ms</dd>
+            </div>
+            <div class="status-row">
+              <dt>抓取时间</dt>
+              <dd>${escapeHtml(m.at || "—")}<span class="status-hint">（本次请求完成的真实时刻）</span></dd>
+            </div>
+          </dl>
+          ${errorBlock}
+        </section>
+
+        <section class="about-block reveal">
+          <h2 class="section-title">② 数据核对</h2>
+          <dl class="status-list">
+            <div class="status-row">
+              <dt>接口返回</dt>
+              <dd>${ok ? `${m.apiCount} 条` : "—"}</dd>
+            </div>
+            <div class="status-row">
+              <dt>通过字段校验</dt>
+              <dd>${ok ? `${m.passedCount} 条` : "—"}</dd>
+            </div>
+            <div class="status-row">
+              <dt>被静默剔除</dt>
+              <dd class="${removed > 0 ? "status-num--bad" : ""}">${ok ? `${removed} 条` : "—"}</dd>
+            </div>
+            <div class="status-row">
+              <dt>首页数据来源</dt>
+              <dd>${escapeHtml(sourceText)}</dd>
+            </div>
+          </dl>
+          <p class="status-note">
+            被剔除 = 缺必填字段的歌。它不会报错，只会从列表里悄悄消失，所以单独列一项盯着：
+            这个数字不是 0，就得去查是哪首歌缺了字段。
+          </p>
+        </section>
+
+        <section class="about-block reveal">
+          <h2 class="section-title">③ 写入测试</h2>
+          <p class="status-note">
+            把《${escapeHtml(m.probeTitle || "第一首歌")}》写一条收藏进数据库，再立刻读回来。
+            读得回 = 写真的落库了，不是只在前端装样子。
+          </p>
+          <p><button type="button" class="btn status-write" data-status-write data-song-id="${escapeHtml(m.probeId || "")}">写入一条测试收藏</button></p>
+          <p class="status-result" id="status-write-result" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="about-block reveal">
+          <h2 class="section-title">④ 你也可以自己验</h2>
+          <ol class="status-steps">
+            <li>按 <code>F12</code> → <code>Network</code> 面板 → 刷新本页，找到 <code>rpc/get_songs</code> 那条请求：地址必须是 <code>https://…supabase.co</code>。出现 <code>localhost</code> 或 <code>127.0.0.1</code> 就是没切干净。</li>
+            <li>去数据库控制台改一条歌名 → 回首页刷新：名字跟着变 = 页面读的是真库；不变 = 还在用本地备份。</li>
+            <li>点上面那个按钮写入一次 → 刷新本页再点一次，提示「已经在收藏里了」= 上一次确实写进了库。</li>
+          </ol>
+        </section>
+
+        <footer class="page-footer">🎵 中V歌曲故事 · 位于第 3 周验收用的检查页 · <a class="about-link" href="#/">回首页</a></footer>
       </main>
     `;
   },

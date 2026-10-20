@@ -50,7 +50,12 @@ function retryRoute() {
 /** 导航栏当前页高亮（框架 B）：song/series 归入「首页」高亮 */
 function setActiveNav() {
   const hash = location.hash || "#/";
-  const current = hash.startsWith("#/about") ? "about" : "home";
+  // Day 20：检查台不进导航，也不该让「首页」被点亮——它不属于首页
+  const current = hash.startsWith("#/about")
+    ? "about"
+    : hash.startsWith("#/status")
+    ? ""
+    : "home";
   document.querySelectorAll(".nav-link").forEach((a) => {
     a.classList.toggle("active", a.dataset.route === current);
   });
@@ -84,6 +89,8 @@ function renderRoute(app) {
     } else {
       renderSeries(app, series); // 正常访问：先骨架，再出内容
     }
+  } else if (hash === "#/status") {
+    renderStatus(app);
   } else if (hash === "#/about") {
     app.innerHTML = Render.aboutPage();
   } else if (hash === "#/" || hash === "#" || hash === "") {
@@ -93,6 +100,109 @@ function renderRoute(app) {
   }
 
   setupRevealAnimation();
+}
+
+/**
+ * 云端数据检查台（Day 20）：每次进入都**真打一次接口**，不复用 Store 的缓存。
+ * 检查台的意义是「现在这一刻通不通、数据是不是真的」，看缓存等于自己骗自己。
+ * 返回的数据同时过一遍业务层的 validateSong，与页面列表口径保持一致。
+ */
+function renderStatus(app) {
+  app.innerHTML = Render.statusPage(null, "loading");
+
+  const t0 = performance.now();
+  // 两件事一起等：①检查台自己真打一次接口（要耗时与条数）
+  //              ②首页那次 Store.loadSongs() 落地（否则「首页数据来源」会误报「尚未请求」）
+  Promise.all([Api.getSongs(), Store.loadSongs()])
+    .then(([j]) => {
+      const ms = Math.round(performance.now() - t0);
+      const list = j && Array.isArray(j.data) ? j.data : [];
+      const apiOk = !!(j && j.ok === true && list.length > 0);
+      const passedCount = list.filter(validateSong).length;
+      const first = list[0] || (typeof SONGS !== "undefined" ? SONGS[0] : null);
+
+      app.innerHTML = Render.statusPage(
+        {
+          apiOk,
+          apiCount: list.length,
+          passedCount,
+          ms,
+          at: nowText(),
+          error: apiOk ? "" : (j && j.error) || "接口没有返回有效数据",
+          source: Store.getDataSource(),
+          probeTitle: first ? first.title : "",
+          probeId: first ? first.id : "",
+        },
+        apiOk ? "success" : "error"
+      );
+      setActiveNav();
+      setupRevealAnimation();
+    })
+    .catch((err) => {
+      // Api.getSongs 内部已兜网络异常，这里只兜「连兜底都炸了」的极端情况
+      console.error("[app] 检查台检测异常：", err);
+      app.innerHTML = Render.statusPage(
+        { apiOk: false, apiCount: 0, passedCount: 0, ms: 0, at: nowText(), error: "检测过程出错：" + (err && err.message), source: Store.getDataSource() },
+        "error"
+      );
+      setActiveNav();
+      setupRevealAnimation();
+    });
+}
+
+/**
+ * 检查台的写入测试（Day 20）：写一条收藏进库，再立刻读回来。
+ * 判断「真的落库」不看写入接口自己说什么，看读回列表里有没有它。
+ */
+async function handleStatusWrite(btn) {
+  const out = document.getElementById("status-write-result");
+  if (!out || btn.dataset.busy === "1") return;
+
+  const uid = Store.getUid();
+  const songId = btn.getAttribute("data-song-id") || "";
+  out.className = "status-result";
+  if (!uid || !songId) {
+    out.className = "status-result status-result--bad";
+    out.textContent = "✗ 缺少本机 uid 或没有可写的歌，写入测试跳过";
+    return;
+  }
+
+  btn.dataset.busy = "1";
+  btn.setAttribute("aria-busy", "true");
+  btn.setAttribute("aria-disabled", "true");
+  const prevLabel = btn.textContent;
+  btn.textContent = "写入中…";
+  out.textContent = "";
+
+  try {
+    const w = await Api.addFavorite(uid, songId);
+    const r = await Api.getFavorites(uid); // 无论写入结果如何都读回一次——这是落库的证据
+    const list = r && Array.isArray(r.data) ? r.data : [];
+    const hit = list.indexOf(songId) !== -1;
+
+    if (w && w.ok === true && hit) {
+      out.className = "status-result status-result--ok";
+      out.textContent = `✓ 写入成功：${songId} 已落库；读回 ${list.length} 条收藏，其中包含这条。`;
+    } else if (w && w.ok === false && w.data && w.data.duplicate && hit) {
+      out.className = "status-result status-result--ok";
+      out.textContent = `✓ 这条测试收藏上次已经写过了（重复提交被正确拦下）；读回 ${list.length} 条，其中仍包含它 —— 数据一直留在库里。`;
+    } else if (w && w.ok === false) {
+      out.className = "status-result status-result--bad";
+      out.textContent = `✗ 写入被拒：${w.error || "未知原因"}`;
+    } else {
+      out.className = "status-result status-result--bad";
+      out.textContent = `✗ 写入返回异常；读回 ${list.length} 条，里面没有这条。`;
+    }
+  } catch (err) {
+    console.error("[app] 检查台写入测试失败：", err);
+    out.className = "status-result status-result--bad";
+    out.textContent = `✗ 写入失败：${err && err.message ? err.message : "网络异常"}`;
+  } finally {
+    btn.dataset.busy = "0";
+    btn.removeAttribute("aria-busy");
+    btn.removeAttribute("aria-disabled");
+    btn.textContent = prevLabel;
+  }
 }
 
 /**
@@ -429,6 +539,21 @@ window.addEventListener("DOMContentLoaded", () => {
     if (btn && btn.tagName !== "BUTTON") {
       e.preventDefault();
       handleFavorite(btn);
+    }
+  });
+
+  // Day 20：检查台的两个按钮。用委托而不是 onclick，检查台重渲染后依然有效。
+  document.addEventListener("click", (e) => {
+    const write = e.target.closest("[data-status-write]");
+    if (write) {
+      e.preventDefault();
+      handleStatusWrite(write);
+      return;
+    }
+    const retry = e.target.closest("[data-status-retry]");
+    if (retry) {
+      e.preventDefault();
+      renderStatus(document.getElementById("app"));
     }
   });
 });

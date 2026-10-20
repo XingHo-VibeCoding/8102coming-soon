@@ -134,7 +134,11 @@
 2. **读接口**：同一脚本创建两个 PostgreSQL 函数 `get_songs()` / `get_favorites(uid text)`，`SECURITY DEFINER` + `GRANT EXECUTE TO anon`，由 Supabase PostgREST 自动暴露为 HTTP RPC（等价「云函数」）。
 3. **安全**：两张表开启 RLS 且不开放 anon 直读；公开读只能走上述 RPC（已验证 anon 直读 `/rest/v1/songs` 返回空数组）。
 4. **真库验证**：把 `songs` 中 `xiafeng` 的 `title` 改成「夏风·改库验证」→ 公开 RPC 立即返回新值 → 已还原为「夏风」。结果：`PUBLIC_PROOF_OK=true`。
-5. **跨域**：Supabase REST 默认 `Access-Control-Allow-Origin: *`，GitHub Pages 静态站可直接 `fetch`；真机（headless Edge）打开站点已验证 `Store._songs=37`、首卡「夏风」、控制台 0 报错。
+5. **跨域**：Supabase REST 的跨域响应头由平台统一给出 `Access-Control-Allow-Origin: *`，**免费项目不提供按域名白名单收紧的配置**。GitHub Pages 静态站可直接 `fetch`。
+   - **Day 20 公网复核（2026-10-20，headless Edge 真机宽度 390）**：从 `https://xingho-vibecoding.github.io` 页面内 `fetch` 本接口 —— `get_songs` 返回 HTTP 200 / `ok:true` / **37 条** / 757ms；`get_favorites` 返回 HTTP 200 / `ok:true` / 0 条 / 912ms。跨域请求能读到响应体 = CORS 通过。
+   - **读数提醒**：在 JS 里 `headers.get("access-control-allow-origin")` 返回 `null` 属正常现象——该头不在浏览器允许脚本读取的列表里，读不到不代表没配置。判断跨域只能看「请求是否成功拿到数据」。
+   - **与课程的差异（如实记录，不假装已按课程做）**：课程要求「跨域只允许自己的静态托管域名，禁止使用 `*`」。Supabase 的做法是把 ACAO 固定为 `*`，无法按域名收紧。因此本项目安全边界不靠 CORS，而靠三层：`anon` 只暴露 publishable key（可公开）；`songs` / `favorites` 两张表开启 RLS 且不开放 anon 直读；公开读只能调用 `SECURITY DEFINER` 的 RPC（函数白名单）。
+   - **网络实况**：同日复核中，页面首屏自身的请求出现过 1 次 `net::ERR_CONNECTION_RESET`，同一请求随后重试成功。属网络层偶发重置，与 CORS 无关。正因如此，Day 20 的检查台必须显示「数据来源：云端 / 本地兜底」，不能让接口抖动被静默掩盖成「看起来正常」。
 6. **备选（未部署）**：`supabase/functions/get-songs|get-favorites/index.ts` 为 Deno Edge Function 版本，供将来需要自定义鉴权/聚合时启用；当前读接口无需它，故未部署。
 
 ---

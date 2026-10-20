@@ -16,6 +16,16 @@
   --accent: #7aa2ff;
   --accent-soft: rgba(122, 162, 255, 0.22);
   --accent-border: rgba(122, 162, 255, 0.55);
+  /* Day 20：状态色（云端数据检查台的「正常 / 异常」与首页兜底提示条） */
+  --ok: #6ee7a8;
+  --ok-soft: rgba(110, 231, 168, 0.12);
+  --ok-border: rgba(110, 231, 168, 0.4);
+  --bad: #ff8f8f;
+  --bad-soft: rgba(255, 143, 143, 0.12);
+  --bad-border: rgba(255, 143, 143, 0.42);
+  --warn: #ffc857;
+  --warn-soft: rgba(255, 200, 87, 0.1);
+  --warn-border: rgba(255, 200, 87, 0.4);
 }
 
 * { box-sizing: border-box; }
@@ -1026,6 +1036,193 @@ button:focus-visible,
 
 .about-link {
   color: var(--accent, #9db9ff);
+}
+
+/* ---------- 云端数据检查台（Day 20） ---------- */
+/* 这一页是验收取证用的：数字比装饰重要，所以卡片沿用 .about-block，
+   额外样式只负责「状态色 + 两列信息表 + 结果行」。 */
+
+.status-badge-row {
+  margin: 0 0 14px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.status-badge--ok {
+  color: var(--ok);
+  background: var(--ok-soft);
+  border-color: var(--ok-border);
+}
+
+.status-badge--bad {
+  color: var(--bad);
+  background: var(--bad-soft);
+  border-color: var(--bad-border);
+}
+
+/* 两列信息表：左标签右值；手机上在断点里塌成上下两行 */
+.status-list {
+  margin: 0 0 12px;
+}
+
+.status-row {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--card-border);
+}
+
+.status-row:last-child {
+  border-bottom: 0;
+}
+
+.status-row dt {
+  flex: 0 0 116px;
+  color: var(--text-dim);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.status-row dd {
+  flex: 1 1 auto;
+  min-width: 0; /* 允许长接口地址换行，不撑出横向滚动条 */
+  margin: 0;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.status-row dd.status-url {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.status-note {
+  color: var(--text-soft);
+  font-size: 14px;
+  line-height: 1.85;
+  margin: 12px 0 0;
+}
+
+.status-hint {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin-left: 6px;
+}
+
+.status-num--bad {
+  color: var(--bad);
+  font-weight: 600;
+}
+
+.status-error {
+  margin: 12px 0;
+  padding: 12px 14px;
+  border-left: 3px solid var(--bad);
+  border-radius: 10px;
+  background: var(--bad-soft);
+  color: var(--bad);
+  font-size: 14px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.status-steps {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--text-soft);
+  font-size: 14px;
+  line-height: 1.9;
+}
+
+.status-steps li {
+  margin-bottom: 8px;
+}
+
+.status-steps code {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+  color: var(--accent);
+  background: rgba(255, 255, 255, 0.07);
+  padding: 1px 5px;
+  border-radius: 5px;
+  overflow-wrap: anywhere;
+}
+
+/* 写入测试结果：成功绿 / 失败红，不加动效，避免干扰读数 */
+.status-result {
+  min-height: 1px;
+  margin: 12px 0 0;
+  font-size: 14px;
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+}
+
+.status-result--ok {
+  color: var(--ok);
+}
+
+.status-result--bad {
+  color: var(--bad);
+}
+
+/* 骨架：复用 .sk-card 的形状，加载完不跳版 */
+.status-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 首页兜底提示条（Day 20）：云端接口不可用时必须看得见，不能静默用本地数据 */
+.data-warn {
+  max-width: 620px;
+  margin: 0 auto 20px;
+  padding: 12px 16px;
+  border: 1px solid var(--warn-border);
+  border-radius: 12px;
+  background: var(--warn-soft);
+  color: var(--text-soft);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.data-warn strong {
+  color: var(--text);
+}
+
+.data-warn-link {
+  color: var(--accent);
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  /* 手机上标签与值上下排：116px 的标签列会把值挤成一列单字 */
+  .status-row {
+    flex-direction: column;
+    gap: 2px;
+    padding: 9px 0;
+  }
+
+  .status-row dt {
+    flex: none;
+    font-size: 13px;
+  }
+
+  .status-row dd {
+    font-size: 15px;
+  }
 }
 
 /* ---------- 页脚 / 兜底页 ---------- */
