@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Day 24 · 本地联调复现台（站点真实代码 + 本地假后端）</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="site-nav">
+    <a class="nav-brand" href="#/">🎵 中V歌曲故事</a>
+    <div class="nav-links">
+      <a class="nav-link" data-route="home" href="#/">首页</a>
+      <a class="nav-link" data-route="about" href="#/about">关于</a>
+    </div>
+  </nav>
+  <div id="app"></div>
+  <pre id="console-mirror" style="position:fixed;bottom:0;left:0;right:0;max-height:180px;overflow:auto;margin:0;padding:8px 12px;background:rgba(20,20,26,.92);color:#d6e2ff;font:12px/1.6 Consolas,monospace;z-index:9999;white-space:pre-wrap;"></pre>
+  <script src="/js/data.js"></script>
+  <script src="/js/api.js"></script>
+  <script>
+    // ===== 以下三段是「测试台专用的环境替换」，站点代码一行未改 =====
+    // 1) 接口地址指到本地假 PostgREST（契约一致，可增改删查）
+    API_BASE.url = "http://127.0.0.1:8974/__full";
+    // 2) 控制台镜像：console 输出同时打到页面底部，供截图留证
+    (function () {
+      const mirror = document.getElementById("console-mirror");
+      const orig = { log: console.log, warn: console.warn, error: console.error };
+      function put(tag, args) {
+        const line = Array.from(args).map(a => (typeof a === "string" ? a : JSON.stringify(a))).join(" ");
+        mirror.textContent = (mirror.textContent + "\n" + tag + " " + line).split("\n").slice(-40).join("\n");
+      }
+      console.log = function () { put("[log]", arguments); orig.log.apply(console, arguments); };
+      console.warn = function () { put("[warn]", arguments); orig.warn.apply(console, arguments); };
+      console.error = function () { put("[error]", arguments); orig.error.apply(console, arguments); };
+      // 3) fetch 记录：每个 RPC 请求一行（发了几次、返回什么状态，一目了然）
+      const of = window.fetch;
+      window.fetch = function (url, opts) {
+        const u = String(url);
+        return of.apply(this, arguments).then(res => {
+          if (u.indexOf("/rpc/") !== -1) {
+            console.log("[net] POST " + u.split("/rpc/")[1].split("?")[0] + " → HTTP " + res.status);
+          }
+          return res;
+        });
+      };
+    })();
+  </script>
+  <script src="/js/store.js"></script>
+  <script src="/js/render.js"></script>
+  <script src="/js/app.js"></script>
+  <script>
+    // 测试台专用：confirm 自动「确定」，否则无头浏览器里的删除永远走不下去
+    window.confirm = function (msg) { console.log("[confirm] " + String(msg).split("\n")[0] + " → 确定"); return true; };
+
+    // 复现驱动：?auto=double-delete —— 写入一条测试收藏，等写入结果出来，再 0 间隔快速连点两次「删掉这条收藏」
+    (function () {
+      const mode = new URLSearchParams(location.search).get("auto");
+      if (mode !== "double-delete") return;
+      function poll(label, test, cb, tries) {
+        let r = null;
+        try { r = test(); } catch (e) {}
+        if (r) return cb(r);
+        if (tries <= 0) { console.error("[driver] 等不到：" + label); return; }
+        setTimeout(function () { poll(label, test, cb, tries - 1); }, 120);
+      }
+      function clickFresh(sel, tag) {
+        const el = document.querySelector(sel);
+        if (!el) { console.error("[driver] 点击时找不到 " + sel); return false; }
+        console.log("[driver] " + tag);
+        el.click();
+        return true;
+      }
+      location.hash = "#/status";
+      poll("写入按钮", function () { return document.querySelector("[data-status-write]"); }, function () {
+        clickFresh("[data-status-write]", "第 1 次点击写入");
+        poll("写入结果文本", function () {
+          const out = document.getElementById("status-write-result");
+          return out && out.textContent ? out : null;
+        }, function () {
+          poll("删除按钮", function () { return document.querySelector("[data-status-delete]"); }, function () {
+            clickFresh("[data-status-delete]", "第 1 次点击删除");
+            clickFresh("[data-status-delete]", "第 2 次点击删除（快速连点，间隔 0ms）");
+          }, 80);
+        }, 80);
+      }, 80);
+    })();
+  </script>
+</body>
+</html>

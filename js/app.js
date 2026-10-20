@@ -271,6 +271,11 @@ async function handleStatusDelete(btn) {
   const out = document.getElementById("status-note-result");
   if (!out || btn.dataset.busy === "1") return;
 
+  // Day 24 修复：busy 标记必须在任何 await 之前设上。
+  // 之前是在读列表 + confirm 之后才设，快速连点时两次点击都能通过守卫，
+  // 导致 delete_favorite 被真实请求两次（第二次靠服务端 missing 兜底才没出错）。
+  btn.dataset.busy = "1";
+
   const uid = Store.getUid();
   const songId = btn.getAttribute("data-song-id") || "";
   out.className = "status-result";
@@ -283,13 +288,16 @@ async function handleStatusDelete(btn) {
   if (!existed) {
     out.className = "status-result status-result--bad";
     out.textContent = `✗ 收藏列表里本来就没有 ${songId}，先点上面「写入一条测试收藏」再试删除。`;
+    delete btn.dataset.busy;
     return;
   }
 
   const yes = window.confirm(`确定删除收藏 ${songId} 吗？\n会从云端数据库里真正删掉，不会进回收站。`);
-  if (!yes) return;
+  if (!yes) {
+    delete btn.dataset.busy;
+    return;
+  }
 
-  btn.dataset.busy = "1";
   btn.setAttribute("aria-busy", "true");
   const prevLabel = btn.textContent;
   btn.textContent = "删除中…";
