@@ -531,7 +531,8 @@ function favButton(songId, variant) {
   const isCard = variant === "card";
   const cls = isCard ? "fav-btn fav-btn-card" : "fav-btn btn";
   const tagAttrs = isCard ? ' role="button" tabindex="0"' : ' type="button"';
-  return `<${isCard ? "span" : "button"} class="${cls}"${tagAttrs} data-fav-id="${escapeHtml(songId)}" aria-pressed="${on}" aria-busy="false" title="${on ? "点击取消收藏" : "点击加入收藏"}">${on ? "♥ 已收藏" : "♡ 收藏"}</${isCard ? "span" : "button"}>`;
+  // Day 18：取消收藏依赖 DELETE 接口（第 4 周），已收藏态不再提示「点击取消收藏」
+  return `<${isCard ? "span" : "button"} class="${cls}"${tagAttrs} data-fav-id="${escapeHtml(songId)}" aria-pressed="${on}" aria-busy="false" title="${on ? "已收藏（取消功能将在第 4 周上线）" : "点击加入收藏"}">${on ? "♥ 已收藏" : "♡ 收藏"}</${isCard ? "span" : "button"}>`;
 }
 
 /**

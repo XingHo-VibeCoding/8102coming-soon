@@ -325,6 +325,13 @@ async function handleFavorite(el) {
   const id = el.getAttribute("data-fav-id");
   if (!id || el.dataset.busy === "1") return; // 处理中：忽略连点
 
+  // Day 18：课程明确「今日不做 DELETE」，取消收藏要等第 4 周的 DELETE 接口。
+  // 已收藏的歌再点一次 → 直接提示，不发请求（避免无意义地触发「重复提交被拒」）。
+  if (Store.isFavorite(id)) {
+    showToast("已经收藏过啦 ♥（取消收藏将在第 4 周上线）", "success");
+    return;
+  }
+
   const prevLabel = el.textContent;
   const prevPressed = el.getAttribute("aria-pressed") === "true";
 
@@ -338,18 +345,23 @@ async function handleFavorite(el) {
   el.textContent = "处理中…";
 
   try {
-    // ② 成功：切到新状态 + 成功提示（再点一次即撤销，走的是同一条路径）
-    const nowFav = await Store.toggleFavorite(id);
-    el.setAttribute("aria-pressed", String(nowFav));
-    el.setAttribute("title", nowFav ? "点击取消收藏" : "点击加入收藏");
-    el.textContent = nowFav ? "♥ 已收藏" : "♡ 收藏";
-    showToast(nowFav ? "已加入收藏 ♥" : "已取消收藏", "success");
+    // ② 成功：真实写入云端数据库（Day 18 的 POST /api/favorites）
+    await Store.addFavorite(id);
+    el.setAttribute("aria-pressed", "true");
+    el.setAttribute("title", "已收藏（取消功能将在第 4 周上线）");
+    el.textContent = "♥ 已收藏";
+    showToast("已加入收藏 ♥", "success");
   } catch (err) {
     // ③ 失败：按钮回到原状态 + 失败提示（不静默吞掉错误）
     console.error("[app] 收藏失败：", err);
     el.setAttribute("aria-pressed", String(prevPressed));
     el.textContent = prevLabel;
-    showToast("收藏失败，请再试一次", "error");
+    // 重复提交不是故障，提示文案要分开：重复说「已经收藏过」，其它显示服务端中文原因
+    if (err && err.duplicate) {
+      showToast("已经收藏过啦 ♥", "success");
+    } else {
+      showToast(err && err.message ? err.message : "收藏失败，请再试一次", "error");
+    }
   } finally {
     // ④ 收尾：解除禁用，恢复可点（真按钮全程保持可聚焦，焦点不丢）
     el.dataset.busy = "0";
@@ -359,9 +371,25 @@ async function handleFavorite(el) {
   }
 }
 
+/**
+ * Day 18：云端收藏加载完成后调用——把页面上所有收藏按钮刷成真实状态。
+ * 不改页面结构，只改 aria-pressed / 文案 / title，避免整页重渲染。
+ */
+function refreshFavButtons() {
+  document.querySelectorAll("[data-fav-id]").forEach((el) => {
+    const id = el.getAttribute("data-fav-id");
+    const on = Store.isFavorite(id);
+    el.setAttribute("aria-pressed", String(on));
+    el.setAttribute("title", on ? "已收藏（取消功能将在第 4 周上线）" : "点击加入收藏");
+    el.textContent = on ? "♥ 已收藏" : "♡ 收藏";
+  });
+}
+
 window.addEventListener("hashchange", route);
 window.addEventListener("DOMContentLoaded", () => {
   Store.loadSongs(); // Day 17：首屏前就发起云端读取，首页成功态会等到它落地
+  // Day 18：云端收藏到位后，把页面上所有收藏按钮的状态刷新一遍
+  Store.loadFavorites().then(refreshFavButtons);
   route();
 
   // 卡片内「系列标签」跳转（B4 反向跳回）：用事件委托实现，

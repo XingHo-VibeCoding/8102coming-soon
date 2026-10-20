@@ -27,8 +27,12 @@ function validateSong(song) {
   return true;
 }
 
-// 收藏的本地存储键（Day 11）：纯静态站无服务器，收藏先记在本机浏览器里
+// 收藏的本地存储键（Day 11）：云端读不到时的回落备份，不再是唯一数据源
 const FAV_KEY = "zvf:favorites";
+
+// 本机用户标识的存储键（Day 18）：课程不登录、不建用户表，
+// 收藏按「本机生成的 uid」区分，首次访问时生成并一直复用。
+const UID_KEY = "zvf:uid";
 
 // ---- Day 17：云端读取接口（Supabase PostgREST RPC，等价课程的「云函数 GET 读接口」）----
 // 设计依据本文件头部注释：「方案 B（云后端）时只改本文件内部实现，页面代码零改动」。
@@ -43,6 +47,10 @@ const Store = {
   // Day 17：云端歌曲缓存；null = 尚未加载，回落静态 SONGS
   _songs: null,
   _loadPromise: null,
+
+  // Day 18：云端收藏缓存；null = 尚未加载，回落本地备份
+  _favs: null,
+  _favPromise: null,
 
   /** 全部歌曲（F1 首页卡片列表用）。Day 17 起优先返回云端真实数据，失败回落静态 SONGS。 */
   getAllSongs() {
@@ -182,20 +190,44 @@ const Store = {
     return songs.filter((song) => Store.splitSingers(song.singer).indexOf(sg) !== -1);
   },
 
-  // ---------- 收藏（Day 11 · 页面只调这三个函数，不直接碰 localStorage）----------
-  // 为什么先存本地：网站是纯静态的，没有服务器可存用户数据（PRD 方案 A）。
-  // 将来接云后端（方案 B）时，只改这三个函数的内部实现，页面代码零改动。
+  // ---------- 收藏（Day 11 建形 · Day 18 接云端写入）----------
+  // Day 18 起：收藏真实写进 Supabase 的 favorites 表（POST /api/favorites），
+  // 本机 localStorage 降级为「云端读不到时」的回落备份，不再是唯一数据源。
+  // 页面依旧只调 Store 的函数，不直接碰 localStorage / fetch。
+  //
+  // 重要：课程 Day 18 明确「今日不做 DELETE」，所以这里只有「加入收藏」，
+  // 没有「取消收藏」——取消要等第 4 周的 DELETE 接口（见 api-contract.md）。
 
-  /** 收藏的歌曲 id 列表；读不到或数据损坏时返回空数组（不让页面崩） */
-  getFavorites() {
+  /** 本机用户标识：首次访问时生成，之后一直复用（课程不登录、不建用户表） */
+  getUid() {
+    try {
+      let uid = localStorage.getItem(UID_KEY);
+      if (!uid) {
+        uid = "u_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        localStorage.setItem(UID_KEY, uid);
+      }
+      return uid;
+    } catch (err) {
+      console.warn("[store] 无法读写本机 uid，收藏将不可用：", err);
+      return "";
+    }
+  },
+
+  /** 本地收藏列表（云端不可用时的回落备份） */
+  _localFavorites() {
     try {
       const raw = localStorage.getItem(FAV_KEY);
       const list = raw ? JSON.parse(raw) : [];
       return Array.isArray(list) ? list.filter((x) => typeof x === "string") : [];
     } catch (err) {
-      console.warn("[store] 读取收藏失败（当作没有收藏处理）：", err);
+      console.warn("[store] 读取本地收藏失败（当作没有收藏处理）：", err);
       return [];
     }
+  },
+
+  /** 收藏的歌曲 id 列表：优先云端缓存，云端还没加载完就先用本地备份 */
+  getFavorites() {
+    return Store._favs || Store._localFavorites();
   },
 
   /** 这首歌收藏了没 */
@@ -204,39 +236,86 @@ const Store = {
   },
 
   /**
-   * 切换收藏：点一下收藏，再点一下取消（撤销）。
-   * 返回 Promise —— 成功给出新状态（true = 已收藏）；失败 reject 一个 Error，由界面显示失败提示。
-   * 刻意延迟 700ms：让「处理中」这一态在真实站点上看得见（今天是临时实现，将来换成真实网络请求）。
-   * 失败演示开关：网址后面加 ?favfail=1，操作必定失败（用于练习「失败提示」，见 README）。
+   * Day 18：从云端读取我的收藏（GET /api/favorites）。
+   * 失败时静默回落到本地备份，不让页面崩。
    */
-  toggleFavorite(id) {
-    const forceFail =
-      new URLSearchParams(location.search).get("favfail") === "1";
+  loadFavorites() {
+    if (Store._favPromise) return Store._favPromise;
+    Store._favPromise = (async () => {
+      const uid = Store.getUid();
+      if (!uid) return Store._localFavorites();
+      try {
+        const r = await fetch(`${CLOUD_API.url}/rest/v1/rpc/get_favorites`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: CLOUD_API.anon,
+            Authorization: "Bearer " + CLOUD_API.anon,
+          },
+          body: JSON.stringify({ uid }),
+        });
+        const j = await r.json();
+        if (j && j.ok === true && Array.isArray(j.data)) {
+          Store._favs = j.data;
+          console.info(`[store] 已从云端加载 ${Store._favs.length} 条收藏`);
+        } else {
+          console.warn("[store] 云端收藏返回异常，回落本地：", j);
+        }
+      } catch (e) {
+        console.warn("[store] 云端读取收藏失败，回落本地：", e);
+      }
+      return Store.getFavorites();
+    })();
+    return Store._favPromise;
+  },
 
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (forceFail) {
-          reject(new Error("模拟失败：网址带了 ?favfail=1"));
-          return;
-        }
-        try {
-          const list = Store.getFavorites();
-          const idx = list.indexOf(id);
-          let nextFav;
-          if (idx === -1) {
-            list.push(id);
-            nextFav = true;
-          } else {
-            list.splice(idx, 1);
-            nextFav = false;
-          }
-          localStorage.setItem(FAV_KEY, JSON.stringify(list));
-          resolve(nextFav);
-        } catch (err) {
-          // 浏览器禁用本地存储 / 存储写满，都会走到这里 → 界面显示失败提示
-          reject(err);
-        }
-      }, 700);
-    });
+  /**
+   * Day 18：加入收藏（POST /api/favorites）——真实写进数据库。
+   * 成功：更新云端缓存 + 同步本地备份，返回 true。
+   * 被拒（重复 / 缺字段 / 歌曲不存在）：reject 一个带中文说明的 Error，由界面提示。
+   * 注意：不做「取消收藏」——DELETE 属于第 4 周，课程 Day 18 明确今日不做。
+   */
+  async addFavorite(id) {
+    const uid = Store.getUid();
+    if (!uid) throw new Error("本机无法生成用户标识，收藏不可用");
+
+    let j = null;
+    try {
+      const r = await fetch(`${CLOUD_API.url}/rest/v1/rpc/add_favorite`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: CLOUD_API.anon,
+          Authorization: "Bearer " + CLOUD_API.anon,
+        },
+        body: JSON.stringify({ uid, song_id: id }),
+      });
+      j = await r.json();
+    } catch (e) {
+      // 网络不通 / 服务不可用：给中文说明，不静默吞掉错误
+      throw new Error("网络或服务不可用，收藏没写成，请稍后再试");
+    }
+
+    // 响应不是契约形状（例如 PostgREST 直接报错）：统一转成中文
+    if (!j || typeof j.ok !== "boolean") {
+      throw new Error("服务返回异常，收藏没写成，请稍后再试");
+    }
+    if (j.ok === false) {
+      const err = new Error(j.error || "收藏失败");
+      // 重复提交 ≠ 故障，界面据此提示「已经收藏过啦」而不是「收藏失败」
+      err.duplicate = !!(j.data && j.data.duplicate);
+      throw err;
+    }
+
+    // 成功：更新缓存，并同步一份到本地备份
+    const list = (Store._favs || Store._localFavorites()).slice();
+    if (list.indexOf(id) === -1) list.push(id);
+    Store._favs = list;
+    try {
+      localStorage.setItem(FAV_KEY, JSON.stringify(list));
+    } catch (e) {
+      // 本地备份写不进去不影响云端已经写成功的结果
+    }
+    return true;
   },
 };

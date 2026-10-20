@@ -104,7 +104,27 @@
   ```
 - 缺 `uid`：`{ "ok": false, "error": "缺少必填参数 uid" }`
 - 失败响应：`{ "ok": false, "error": "读取收藏失败：<中文原因>" }`
-- 写入接口（`POST /api/favorites`，新增收藏 / `DELETE` 取消）留到 **Day 18**。
+- 写入接口见 2.3（Day 18 已实现）；`DELETE` 取消收藏属**第 4 周**。
+
+### 2.3 `POST /api/favorites` ✅ 已实现（Day 18）
+
+- 公网地址（调试工具可直接 POST）：
+  ```
+  https://wtqzywartwuyzeiiqlyb.supabase.co/rest/v1/rpc/add_favorite?apikey=sb_publishable_0NtBaZMaYbW605haSsqhUA_rifL8HCO
+  ```
+- 服务端实际实现：PostgreSQL 函数 `public.add_favorite(uid text, song_id text)`（`SECURITY DEFINER`）
+- 方法：POST；请求体 `{"uid":"...","song_id":"..."}`
+- 作用：把一条收藏**真实写入** `favorites` 表。
+- 成功（HTTP 200）：
+  ```json
+  { "ok": true, "data": { "uid": "u_xxx", "song_id": "shimo-song" }, "error": null }
+  ```
+- 校验与防重复（失败仍返回 HTTP 200，靠 `ok:false` 区分）：
+  - 缺 `uid` / `song_id` → `{ "ok": false, "data": null, "error": "缺少必填参数：uid、song_id" }`（中文，缺哪个说哪个）
+  - `song_id` 不存在 → `{ "ok": false, "data": null, "error": "歌曲不存在：<id>" }`
+  - 重复提交 → `{ "ok": false, "data": { ..., "duplicate": true }, "error": "这首歌已经在收藏里了，不要重复添加" }`（**不重复写入**）
+- 取消收藏：**不做**——`DELETE` 属第 4 周（课程 Day 18 明确今日不做）。
+- 测试脚本：`scripts/test-write-api.cjs`（正常写入 / 重复提交 / 缺必填字段 三条）。
 
 ---
 
