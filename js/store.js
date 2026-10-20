@@ -34,14 +34,9 @@ const FAV_KEY = "zvf:favorites";
 // 收藏按「本机生成的 uid」区分，首次访问时生成并一直复用。
 const UID_KEY = "zvf:uid";
 
-// ---- Day 17：云端读取接口（Supabase PostgREST RPC，等价课程的「云函数 GET 读接口」）----
-// 设计依据本文件头部注释：「方案 B（云后端）时只改本文件内部实现，页面代码零改动」。
-// 接口契约见仓库根目录 api-contract.md（GET /api/songs 由 get_songs RPC 承担）。
-// publishable key 是公开安全的前端面密钥，本就该出现在客户端代码里。
-const CLOUD_API = {
-  url: "https://wtqzywartwuyzeiiqlyb.supabase.co",
-  anon: "sb_publishable_0NtBaZMaYbW605haSsqhUA_rifL8HCO",
-};
+// ---- Day 19：HTTP 细节已拆到 js/api.js（数据访问层）----
+// store.js 只负责业务逻辑（缓存、回落、状态整理），不再拼 URL / 带请求头。
+// 接口契约见仓库根目录 api-contract.md。
 
 const Store = {
   // Day 17：云端歌曲缓存；null = 尚未加载，回落静态 SONGS
@@ -72,16 +67,8 @@ const Store = {
     if (Store._loadPromise) return Store._loadPromise;
     Store._loadPromise = (async () => {
       try {
-        const r = await fetch(`${CLOUD_API.url}/rest/v1/rpc/get_songs`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: CLOUD_API.anon,
-            Authorization: "Bearer " + CLOUD_API.anon,
-          },
-          body: "{}",
-        });
-        const j = await r.json();
+        // Day 19：调用数据访问层，不再在这里拼请求
+        const j = await Api.getSongs();
         if (j && j.ok === true && Array.isArray(j.data) && j.data.length) {
           Store._songs = j.data;
           console.info(`[store] 已从云端加载 ${Store._songs.length} 首真实歌曲`);
@@ -245,16 +232,8 @@ const Store = {
       const uid = Store.getUid();
       if (!uid) return Store._localFavorites();
       try {
-        const r = await fetch(`${CLOUD_API.url}/rest/v1/rpc/get_favorites`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: CLOUD_API.anon,
-            Authorization: "Bearer " + CLOUD_API.anon,
-          },
-          body: JSON.stringify({ uid }),
-        });
-        const j = await r.json();
+        // Day 19：调用数据访问层，不再在这里拼请求
+        const j = await Api.getFavorites(uid);
         if (j && j.ok === true && Array.isArray(j.data)) {
           Store._favs = j.data;
           console.info(`[store] 已从云端加载 ${Store._favs.length} 条收藏`);
@@ -279,27 +258,8 @@ const Store = {
     const uid = Store.getUid();
     if (!uid) throw new Error("本机无法生成用户标识，收藏不可用");
 
-    let j = null;
-    try {
-      const r = await fetch(`${CLOUD_API.url}/rest/v1/rpc/add_favorite`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: CLOUD_API.anon,
-          Authorization: "Bearer " + CLOUD_API.anon,
-        },
-        body: JSON.stringify({ uid, song_id: id }),
-      });
-      j = await r.json();
-    } catch (e) {
-      // 网络不通 / 服务不可用：给中文说明，不静默吞掉错误
-      throw new Error("网络或服务不可用，收藏没写成，请稍后再试");
-    }
-
-    // 响应不是契约形状（例如 PostgREST 直接报错）：统一转成中文
-    if (!j || typeof j.ok !== "boolean") {
-      throw new Error("服务返回异常，收藏没写成，请稍后再试");
-    }
+    // Day 19：HTTP 细节在 api.js；这里只处理业务结果
+    const j = await Api.addFavorite(uid, id);
     if (j.ok === false) {
       const err = new Error(j.error || "收藏失败");
       // 重复提交 ≠ 故障，界面据此提示「已经收藏过啦」而不是「收藏失败」
