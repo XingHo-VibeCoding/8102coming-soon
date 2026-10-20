@@ -1,0 +1,93 @@
+{
+  "project_ref": "wtqzywartwuyzeiiqlyb",
+  "region": "ap-south-1 (Mumbai)",
+  "table": "songs",
+  "total_rows": 37,
+  "favorites_rows": 0,
+  "sample": [
+    {
+      "id": "xiafeng",
+      "title": "夏风",
+      "singer": "洛天依",
+      "series_id": "shimo",
+      "date": "2012-07-27"
+    },
+    {
+      "id": "liwu",
+      "title": "礼物",
+      "singer": "洛天依",
+      "series_id": "shimo",
+      "date": "2013-08-14"
+    },
+    {
+      "id": "shuangxiang-sinian",
+      "title": "双向思念",
+      "singer": "洛天依、言和",
+      "series_id": "shuangxiang",
+      "date": "2013-11-26"
+    },
+    {
+      "id": "shuangxiang-kuayue",
+      "title": "双向跨越",
+      "singer": "洛天依、言和",
+      "series_id": "shuangxiang",
+      "date": "2013-12-04"
+    },
+    {
+      "id": "danxiang-xuanzhan",
+      "title": "单向宣战",
+      "singer": "言和",
+      "series_id": "shuangxiang",
+      "date": "2013-12-12"
+    },
+    {
+      "id": "shuangxiang-xingfu",
+      "title": "双向幸福",
+      "singer": "洛天依、言和",
+      "series_id": "shuangxiang",
+      "date": "2013-12-27"
+    },
+    {
+      "id": "shuangxiang-jianjin",
+      "title": "双向监禁",
+      "singer": "洛天依、言和",
+      "series_id": "shuangxiang",
+      "date": "2014-01-10"
+    },
+    {
+      "id": "nixiang-shouhu",
+      "title": "逆向守护",
+      "singer": "洛天依",
+      "series_id": "shuangxiang",
+      "date": "2014-02-27"
+    },
+    {
+      "id": "zhengxiang-qipian",
+      "title": "正向欺骗",
+      "singer": "言和",
+      "series_id": "shuangxiang",
+      "date": "2014-03-28"
+    },
+    {
+      "id": "danxiang-suxing",
+      "title": "单向苏醒",
+      "singer": "洛天依、言和",
+      "series_id": "shuangxiang",
+      "date": "2014-05-22"
+    },
+    {
+      "id": "xiayekong",
+      "title": "夏夜空",
+      "singer": "洛天依",
+      "series_id": "shimo",
+      "date": "2014-09-08"
+    },
+    {
+      "id": "shimo-jiyuyun",
+      "title": "世末积雨云",
+      "singer": "洛天依",
+      "series_id": "shimo",
+      "date": "2014-10-02"
+    }
+  ]
+}
