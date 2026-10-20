@@ -231,13 +231,13 @@ const Store = {
     return songs.filter((song) => Store.splitSingers(song.singer).indexOf(sg) !== -1);
   },
 
-  // ---------- 收藏（Day 11 建形 · Day 18 接云端写入）----------
+  // ---------- 收藏（Day 11 建形 · Day 18 接云端写入 · Day 22 补改/删）----------
   // Day 18 起：收藏真实写进 Supabase 的 favorites 表（POST /api/favorites），
   // 本机 localStorage 降级为「云端读不到时」的回落备份，不再是唯一数据源。
   // 页面依旧只调 Store 的函数，不直接碰 localStorage / fetch。
   //
-  // 重要：课程 Day 18 明确「今日不做 DELETE」，所以这里只有「加入收藏」，
-  // 没有「取消收藏」——取消要等第 4 周的 DELETE 接口（见 api-contract.md）。
+  // Day 22 起：补齐 PATCH（改备注）与 DELETE（取消收藏），数据操作闭环完整。
+  // 删除属于不可逆操作，二次确认由界面层（app.js）负责，这里只管业务结果。
 
   /** 本机用户标识：首次访问时生成，之后一直复用（课程不登录、不建用户表） */
   getUid() {
@@ -306,7 +306,6 @@ const Store = {
    * Day 18：加入收藏（POST /api/favorites）——真实写进数据库。
    * 成功：更新云端缓存 + 同步本地备份，返回 true。
    * 被拒（重复 / 缺字段 / 歌曲不存在）：reject 一个带中文说明的 Error，由界面提示。
-   * 注意：不做「取消收藏」——DELETE 属于第 4 周，课程 Day 18 明确今日不做。
    */
   async addFavorite(id) {
     const uid = Store.getUid();
@@ -331,5 +330,52 @@ const Store = {
       // 本地备份写不进去不影响云端已经写成功的结果
     }
     return true;
+  },
+
+  /**
+   * Day 22：取消收藏（DELETE /api/favorites/:song_id）——真删数据库里的那行。
+   * 成功：同步更新云端缓存与本地备份；收藏不存在也算「已删除」，返回 true。
+   * 缺字段 / 服务端拒绝：reject 带中文说明的 Error。
+   */
+  async removeFavorite(id) {
+    const uid = Store.getUid();
+    if (!uid) throw new Error("本机无法生成用户标识，收藏不可用");
+
+    const j = await Api.deleteFavorite(uid, id);
+    if (j.ok === false) {
+      // 「本来就不存在」不算失败：删完想要的结果（GET 里没有它）已经达成
+      if (j.data && j.data.missing) {
+        Store._syncFavListAfterRemove(id);
+        return true;
+      }
+      throw new Error(j.error || "取消收藏失败");
+    }
+
+    Store._syncFavListAfterRemove(id);
+    return true;
+  },
+
+  /** Day 22 内部：把某首歌从云端缓存与本地备份里同步移除 */
+  _syncFavListAfterRemove(id) {
+    const list = (Store._favs || Store._localFavorites()).filter((x) => x !== id);
+    Store._favs = list;
+    try {
+      localStorage.setItem(FAV_KEY, JSON.stringify(list));
+    } catch (e) {
+      // 同 addFavorite：备份写不进去不影响云端已成功的结果
+    }
+  },
+
+  /**
+   * Day 22：改收藏备注（PATCH /api/favorites/:song_id）。
+   * note 传空 = 清空备注。成功返回服务端确认的 note 值；失败 reject 中文 Error。
+   */
+  async updateFavoriteNote(id, note) {
+    const uid = Store.getUid();
+    if (!uid) throw new Error("本机无法生成用户标识，收藏不可用");
+
+    const j = await Api.updateFavoriteNote(uid, id, note);
+    if (j.ok === false) throw new Error(j.error || "修改备注失败");
+    return j.data && typeof j.data.note === "string" ? j.data.note : "";
   },
 };

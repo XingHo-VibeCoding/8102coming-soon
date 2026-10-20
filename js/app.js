@@ -206,6 +206,123 @@ async function handleStatusWrite(btn) {
 }
 
 /**
+ * 检查台的改备注测试（Day 22）：改一条收藏的备注，再立刻读明细回来。
+ * 「真改了」的判据不在改接口自己嘴里，在读回的明细里：note 字段等于刚写入的值。
+ */
+async function handleStatusNote(btn) {
+  const out = document.getElementById("status-note-result");
+  if (!out || btn.dataset.busy === "1") return;
+
+  const uid = Store.getUid();
+  const songId = btn.getAttribute("data-song-id") || "";
+  const input = document.getElementById("status-note-input");
+  const note = input ? input.value : "";
+  out.className = "status-result";
+
+  // 先读「改之前」的值——没有前值，就没有「前后对比」可言
+  const before = await Api.getFavoriteDetail(uid);
+  const beforeList = before && Array.isArray(before.data) ? before.data : [];
+  const beforeRow = beforeList.find((x) => x && x.song_id === songId);
+
+  btn.dataset.busy = "1";
+  btn.setAttribute("aria-busy", "true");
+  const prevLabel = btn.textContent;
+  btn.textContent = "保存中…";
+
+  try {
+    const w = await Api.updateFavoriteNote(uid, songId, note);
+    if (w && w.ok === false) {
+      out.className = "status-result status-result--bad";
+      out.textContent = `✗ 修改被拒：${w.error || "未知原因"}`;
+      return;
+    }
+    const r = await Api.getFavoriteDetail(uid);
+    const list = r && Array.isArray(r.data) ? r.data : [];
+    const row = list.find((x) => x && x.song_id === songId);
+    const now = row && typeof row.note === "string" ? row.note : "";
+    const want = note.trim() === "" ? "" : note.trim();
+
+    if (row && now === want) {
+      out.className = "status-result status-result--ok";
+      out.textContent = `✓ 备注已改：读回明细，${escapeHtml(songId)} 的 note 从「${beforeRow ? beforeRow.note || "（空）" : "（无此行）"}」变成「${now === "" ? "（空）" : now}」，与输入一致。`;
+    } else if (!row) {
+      out.className = "status-result status-result--bad";
+      out.textContent = `✗ 读回明细里没有 ${songId} 这条收藏——先点上面「写入一条测试收藏」再试。`;
+    } else {
+      out.className = "status-result status-result--bad";
+      out.textContent = `✗ 改完读回的 note（${now || "（空）"}）和写入的不一致，数据没有真正落库。`;
+    }
+  } catch (err) {
+    console.error("[app] 检查台改备注失败：", err);
+    out.className = "status-result status-result--bad";
+    out.textContent = `✗ 修改失败：${err && err.message ? err.message : "网络异常"}`;
+  } finally {
+    btn.dataset.busy = "0";
+    btn.removeAttribute("aria-busy");
+    btn.textContent = prevLabel;
+  }
+}
+
+/**
+ * 检查台的删收藏测试（Day 22）：真删一条，再读列表确认它消失。
+ * 删除不可逆：先 confirm 二次确认（与歌曲页取消收藏同一规则）。
+ */
+async function handleStatusDelete(btn) {
+  const out = document.getElementById("status-note-result");
+  if (!out || btn.dataset.busy === "1") return;
+
+  const uid = Store.getUid();
+  const songId = btn.getAttribute("data-song-id") || "";
+  out.className = "status-result";
+
+  // 删除前先读一次列表：拿到「删之前它还在」的证据
+  const before = await Api.getFavorites(uid);
+  const beforeList = before && Array.isArray(before.data) ? before.data : [];
+  const existed = beforeList.indexOf(songId) !== -1;
+
+  if (!existed) {
+    out.className = "status-result status-result--bad";
+    out.textContent = `✗ 收藏列表里本来就没有 ${songId}，先点上面「写入一条测试收藏」再试删除。`;
+    return;
+  }
+
+  const yes = window.confirm(`确定删除收藏 ${songId} 吗？\n会从云端数据库里真正删掉，不会进回收站。`);
+  if (!yes) return;
+
+  btn.dataset.busy = "1";
+  btn.setAttribute("aria-busy", "true");
+  const prevLabel = btn.textContent;
+  btn.textContent = "删除中…";
+
+  try {
+    const d = await Api.deleteFavorite(uid, songId);
+    if (d && d.ok === false) {
+      out.className = "status-result status-result--bad";
+      out.textContent = `✗ 删除被拒：${d.error || "未知原因"}`;
+      return;
+    }
+    const r = await Api.getFavorites(uid);
+    const list = r && Array.isArray(r.data) ? r.data : [];
+    if (list.indexOf(songId) === -1) {
+      out.className = "status-result status-result--ok";
+      out.textContent = `✓ 已删除：删除前列表 ${beforeList.length} 条（含 ${songId}），删除后读回 ${list.length} 条，这条已经不在 GET 结果里。`;
+      refreshFavButtons();
+    } else {
+      out.className = "status-result status-result--bad";
+      out.textContent = `✗ 删除接口返回成功，但 GET 结果里仍有 ${songId}——没有真删，这是故障。`;
+    }
+  } catch (err) {
+    console.error("[app] 检查台删收藏失败：", err);
+    out.className = "status-result status-result--bad";
+    out.textContent = `✗ 删除失败：${err && err.message ? err.message : "网络异常"}`;
+  } finally {
+    btn.dataset.busy = "0";
+    btn.removeAttribute("aria-busy");
+    btn.textContent = prevLabel;
+  }
+}
+
+/**
  * 首页状态机（PRD F1 改版）：加载中 → 成功 / 错误。
  * 数据为本地同步加载，「加载中」为短暂展示（约 0.4s），
  * 让四种状态在真实站点可见：成功（默认）、空（搜索无匹配）、
@@ -430,15 +547,18 @@ function showToast(message, type) {
 /**
  * 点收藏按钮的完整流程：禁用 + 「处理中…」→ 成功切换状态并提示 → 失败回原样并提示。
  * 处理中会置 data-busy=1，连点无效（防重复提交）。
+ * Day 22：已收藏的歌再点 = 取消收藏。删除不可逆，先弹二次确认（confirm），
+ * 用户点了「取消」就当什么都没发生；点了「确定」才真发 DELETE。
  */
 async function handleFavorite(el) {
   const id = el.getAttribute("data-fav-id");
   if (!id || el.dataset.busy === "1") return; // 处理中：忽略连点
 
-  // Day 18：课程明确「今日不做 DELETE」，取消收藏要等第 4 周的 DELETE 接口。
-  // 已收藏的歌再点一次 → 直接提示，不发请求（避免无意义地触发「重复提交被拒」）。
+  // Day 22：已收藏 → 取消收藏（二次确认后真删）
   if (Store.isFavorite(id)) {
-    showToast("已经收藏过啦 ♥（取消收藏将在第 4 周上线）", "success");
+    const yes = window.confirm("确定取消收藏这首吗？\n取消后会从云端收藏里真正删掉，不会进回收站。");
+    if (!yes) return; // 用户反悔：什么都不做
+    await unfavoriteFlow(el, id);
     return;
   }
 
@@ -458,7 +578,7 @@ async function handleFavorite(el) {
     // ② 成功：真实写入云端数据库（Day 18 的 POST /api/favorites）
     await Store.addFavorite(id);
     el.setAttribute("aria-pressed", "true");
-    el.setAttribute("title", "已收藏（取消功能将在第 4 周上线）");
+    el.setAttribute("title", "已收藏，再点一次可取消");
     el.textContent = "♥ 已收藏";
     showToast("已加入收藏 ♥", "success");
   } catch (err) {
@@ -482,6 +602,39 @@ async function handleFavorite(el) {
 }
 
 /**
+ * Day 22：取消收藏的完整流程（与 handleFavorite 对称的三态）。
+ * 成功：按钮回到 ♡ 未收藏态；失败：回原样并提示服务端中文原因。
+ */
+async function unfavoriteFlow(el, id) {
+  const prevLabel = el.textContent;
+  const prevPressed = el.getAttribute("aria-pressed") === "true";
+
+  el.dataset.busy = "1";
+  el.classList.add("is-busy");
+  el.setAttribute("aria-busy", "true");
+  el.setAttribute("aria-disabled", "true");
+  el.textContent = "取消中…";
+
+  try {
+    await Store.removeFavorite(id);
+    el.setAttribute("aria-pressed", "false");
+    el.setAttribute("title", "点击加入收藏");
+    el.textContent = "♡ 收藏";
+    showToast("已取消收藏", "success");
+  } catch (err) {
+    console.error("[app] 取消收藏失败：", err);
+    el.setAttribute("aria-pressed", String(prevPressed));
+    el.textContent = prevLabel;
+    showToast(err && err.message ? err.message : "取消收藏失败，请再试一次", "error");
+  } finally {
+    el.dataset.busy = "0";
+    el.classList.remove("is-busy");
+    el.setAttribute("aria-busy", "false");
+    el.removeAttribute("aria-disabled");
+  }
+}
+
+/**
  * Day 18：云端收藏加载完成后调用——把页面上所有收藏按钮刷成真实状态。
  * 不改页面结构，只改 aria-pressed / 文案 / title，避免整页重渲染。
  */
@@ -490,7 +643,7 @@ function refreshFavButtons() {
     const id = el.getAttribute("data-fav-id");
     const on = Store.isFavorite(id);
     el.setAttribute("aria-pressed", String(on));
-    el.setAttribute("title", on ? "已收藏（取消功能将在第 4 周上线）" : "点击加入收藏");
+    el.setAttribute("title", on ? "已收藏，再点一次可取消" : "点击加入收藏");
     el.textContent = on ? "♥ 已收藏" : "♡ 收藏";
   });
 }
@@ -548,6 +701,19 @@ window.addEventListener("DOMContentLoaded", () => {
     if (write) {
       e.preventDefault();
       handleStatusWrite(write);
+      return;
+    }
+    // Day 22：检查台的「改备注 / 删收藏」
+    const note = e.target.closest("[data-status-note]");
+    if (note) {
+      e.preventDefault();
+      handleStatusNote(note);
+      return;
+    }
+    const del = e.target.closest("[data-status-delete]");
+    if (del) {
+      e.preventDefault();
+      handleStatusDelete(del);
       return;
     }
     const retry = e.target.closest("[data-status-retry]");

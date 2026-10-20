@@ -99,4 +99,27 @@ const Api = {
     if (songId.length > 64) return badInput("歌曲 id 太长（最多 64 个字符），请检查数据");
     return callRpc("add_favorite", { uid, song_id: songId }, "收藏失败，请稍后再试");
   },
+
+  /** GET /api/favorites/detail?uid= —— 我的收藏明细（含备注），Day 22 */
+  getFavoriteDetail(uid) {
+    if (!hasText(uid)) return badInput("缺少用户标识（uid），无法读取收藏明细");
+    return callRpc("get_favorites_detail", { uid }, "读取收藏明细失败，请稍后再试");
+  },
+
+  /** PATCH /api/favorites/:song_id —— 只改备注；note 为空 = 清空，Day 22 */
+  updateFavoriteNote(uid, songId, note) {
+    if (!hasText(uid)) return badInput("缺少用户标识（uid），无法修改备注");
+    if (!hasText(songId)) return badInput("缺少歌曲 id，无法修改备注");
+    if (typeof note === "string" && note.trim().length > 200) {
+      return badInput("备注太长（最多 200 字），请删减后再保存");
+    }
+    return callRpc("update_favorite_note", { uid, song_id: songId, note: note || "" }, "修改备注失败，请稍后再试");
+  },
+
+  /** DELETE /api/favorites/:song_id —— 取消收藏，Day 22 */
+  deleteFavorite(uid, songId) {
+    if (!hasText(uid)) return badInput("缺少用户标识（uid），无法取消收藏");
+    if (!hasText(songId)) return badInput("缺少歌曲 id，无法取消收藏");
+    return callRpc("delete_favorite", { uid, song_id: songId }, "取消收藏失败，请稍后再试");
+  },
 };

@@ -1169,6 +1169,46 @@ button:focus-visible,
   overflow-wrap: anywhere;
 }
 
+/* Day 22：改备注/删收藏的表单一行式布局 */
+.status-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 0;
+}
+
+.status-form label {
+  color: var(--text-soft);
+  font-size: 14px;
+}
+
+.status-input {
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  padding: 7px 10px;
+  width: 200px;
+  max-width: 60vw;
+}
+
+.status-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.status-btn--danger {
+  border-color: var(--bad);
+  color: var(--bad);
+}
+
+.status-btn--danger:hover {
+  background: var(--bad-soft);
+}
+
 .status-result--ok {
   color: var(--ok);
 }

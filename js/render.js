@@ -598,7 +598,21 @@ const Render = {
         </section>
 
         <section class="about-block reveal">
-          <h2 class="section-title">④ 你也可以自己验</h2>
+          <h2 class="section-title">④ 改备注 / 删收藏（Day 22）</h2>
+          <p class="status-note">
+            对上面写的那条测试收藏做「改」和「删」：改备注后再读一次明细，看得见新备注 = 真改了；
+            删掉后再读一次，这条消失 = 真删了。改/删不存在的 id，接口会用中文明确说「不存在」。
+          </p>
+          <p class="status-form">
+            <label>备注（留空 = 清空）：<input type="text" id="status-note-input" maxlength="200" placeholder="如：测试-改" class="status-input"></label>
+            <button type="button" class="btn" data-status-note data-song-id="${escapeHtml(m.probeId || "")}">改这条的备注</button>
+            <button type="button" class="btn status-btn--danger" data-status-delete data-song-id="${escapeHtml(m.probeId || "")}">删掉这条收藏</button>
+          </p>
+          <p class="status-result" id="status-note-result" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="about-block reveal">
+          <h2 class="section-title">⑤ 你也可以自己验</h2>
           <ol class="status-steps">
             <li>按 <code>F12</code> → <code>Network</code> 面板 → 刷新本页，找到 <code>rpc/get_songs</code> 那条请求：地址必须是 <code>https://…supabase.co</code>。出现 <code>localhost</code> 或 <code>127.0.0.1</code> 就是没切干净。</li>
             <li>去数据库控制台改一条歌名 → 回首页刷新：名字跟着变 = 页面读的是真库；不变 = 还在用本地备份。</li>
@@ -666,8 +680,8 @@ function favButton(songId, variant) {
   const isCard = variant === "card";
   const cls = isCard ? "fav-btn fav-btn-card" : "fav-btn btn";
   const tagAttrs = isCard ? ' role="button" tabindex="0"' : ' type="button"';
-  // Day 18：取消收藏依赖 DELETE 接口（第 4 周），已收藏态不再提示「点击取消收藏」
-  return `<${isCard ? "span" : "button"} class="${cls}"${tagAttrs} data-fav-id="${escapeHtml(songId)}" aria-pressed="${on}" aria-busy="false" title="${on ? "已收藏（取消功能将在第 4 周上线）" : "点击加入收藏"}">${on ? "♥ 已收藏" : "♡ 收藏"}</${isCard ? "span" : "button"}>`;
+  // Day 22：DELETE 已上线，已收藏态提示「再点一次可取消」（app.js 里会先二次确认）
+  return `<${isCard ? "span" : "button"} class="${cls}"${tagAttrs} data-fav-id="${escapeHtml(songId)}" aria-pressed="${on}" aria-busy="false" title="${on ? "已收藏，再点一次可取消" : "点击加入收藏"}">${on ? "♥ 已收藏" : "♡ 收藏"}</${isCard ? "span" : "button"}>`;
 }
 
 /**

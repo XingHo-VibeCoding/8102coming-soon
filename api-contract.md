@@ -58,6 +58,7 @@
 |---|---|---|---|
 | `uid` | text | NOT NULL | 用户标识（前端生成） |
 | `song_id` | text | NOT NULL | 收藏的歌曲 `id`（FK → `songs.id`） |
+| `note` | text | 可空（Day 22 新增） | 收藏备注，仅 PATCH 接口可写，上限 200 字 |
 | `created_at` | timestamptz | DEFAULT now() | 收藏时间 |
 
 唯一约束：`UNIQUE (uid, song_id)`（重复收藏不产生重复行）。
@@ -123,8 +124,54 @@
   - 缺 `uid` / `song_id` → `{ "ok": false, "data": null, "error": "缺少必填参数：uid、song_id" }`（中文，缺哪个说哪个）
   - `song_id` 不存在 → `{ "ok": false, "data": null, "error": "歌曲不存在：<id>" }`
   - 重复提交 → `{ "ok": false, "data": { ..., "duplicate": true }, "error": "这首歌已经在收藏里了，不要重复添加" }`（**不重复写入**）
-- 取消收藏：**不做**——`DELETE` 属第 4 周（课程 Day 18 明确今日不做）。
 - 测试脚本：`scripts/test-write-api.cjs`（正常写入 / 重复提交 / 缺必填字段 三条）。
+
+### 2.4 `PATCH /api/favorites/:song_id`（改备注）✅ 代码就绪 · SQL 待执行（Day 22）
+
+- 服务端实现（SQL 已入库 `scripts/005_update_delete.sql`，需在 Supabase SQL Editor 执行一次后生效）：
+  PostgreSQL 函数 `public.update_favorite_note(uid text, song_id text, note text)`（`SECURITY DEFINER`）
+- 公网地址（执行 SQL 后可用）：
+  ```
+  https://wtqzywartwuyzeiiqlyb.supabase.co/rest/v1/rpc/update_favorite_note?apikey=sb_publishable_0NtBaZMaYbW605haSsqhUA_rifL8HCO
+  ```
+- 方法：POST；请求体 `{"uid":"...","song_id":"...","note":"..."}`
+- 作用：只修改该条收藏的 `note`（备注）字段；`note` 传空 = 清空备注。**除备注外的任何字段都不可通过本接口修改。**
+- 成功（HTTP 200）：
+  ```json
+  { "ok": true, "data": { "uid": "u_xxx", "song_id": "shimo-song", "note": "测试-改" }, "error": null }
+  ```
+- 防呆（失败仍 HTTP 200，靠 `ok:false` 区分）：
+  - 缺 `uid` / `song_id` → `{ "ok": false, "error": "缺少必填参数：uid、song_id" }`
+  - 备注超过 200 字 → `{ "ok": false, "error": "备注太长（最多 200 字），请删减后再保存" }`
+  - 收藏不存在 → `{ "ok": false, "error": "收藏不存在：<id>（要先收藏这首歌才能改备注）" }`（**绝不静默成功**）
+
+### 2.5 `DELETE /api/favorites/:song_id`（取消收藏）✅ 代码就绪 · SQL 待执行（Day 22）
+
+- 服务端实现：PostgreSQL 函数 `public.delete_favorite(uid text, song_id text)`（`SECURITY DEFINER`，物理删除）
+- 公网地址（执行 SQL 后可用）：
+  ```
+  https://wtqzywartwuyzeiiqlyb.supabase.co/rest/v1/rpc/delete_favorite?apikey=sb_publishable_0NtBaZMaYbW605haSsqhUA_rifL8HCO
+  ```
+- 方法：POST；请求体 `{"uid":"...","song_id":"..."}`
+- 作用：删除该用户的一条收藏；删除后 `GET /api/favorites` 不再返回该 id。
+- 成功（HTTP 200）：
+  ```json
+  { "ok": true, "data": { "uid": "u_xxx", "song_id": "shimo-song", "deleted": true }, "error": null }
+  ```
+- 防呆：
+  - 缺 `uid` / `song_id` → `{ "ok": false, "error": "缺少必填参数：uid、song_id" }`
+  - 收藏不存在 → `{ "ok": false, "data": { ..., "missing": true }, "error": "这条收藏不存在或已被删除：<id>" }`（删不存在的不算成功，也不崩）
+- 二次确认：由**前端**负责（歌曲页收藏按钮与检查台删除按钮都会先弹 `confirm`，用户确认后才发 DELETE）。
+
+### 2.6 `GET /api/favorites/detail?uid=<uid>`（收藏明细，Day 22 新增）✅ 代码就绪 · SQL 待执行
+
+- 服务端实现：PostgreSQL 函数 `public.get_favorites_detail(uid text)`
+- 方法：GET / POST（参数 `uid` 必填）
+- 作用：读取该用户的收藏明细（含 `note` 备注与 `created_at`），用于检查台展示与「改之前/改之后」对比。原 `get_favorites`（2.2）保持不变，避免破坏已有调用。
+- 成功响应：
+  ```json
+  { "ok": true, "data": [ { "song_id": "xiafeng", "note": "测试-改", "created_at": "2026-10-20T..." } ] }
+  ```
 
 ---
 
