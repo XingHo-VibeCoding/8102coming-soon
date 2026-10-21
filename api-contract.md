@@ -126,11 +126,11 @@
   - 重复提交 → `{ "ok": false, "data": { ..., "duplicate": true }, "error": "这首歌已经在收藏里了，不要重复添加" }`（**不重复写入**）
 - 测试脚本：`scripts/test-write-api.cjs`（正常写入 / 重复提交 / 缺必填字段 三条）。
 
-### 2.4 `PATCH /api/favorites/:song_id`（改备注）✅ 代码就绪 · SQL 待执行（Day 22）
+### 2.4 `PATCH /api/favorites/:song_id`（改备注）✅ 已实现（Day 22 · SQL 已于 2026-10-21 执行生效）
 
-- 服务端实现（SQL 已入库 `scripts/005_update_delete.sql`，需在 Supabase SQL Editor 执行一次后生效）：
+- 服务端实现（SQL 已入库 `scripts/005_update_delete.sql`，已于 2026-10-21 在 Supabase SQL Editor 执行，真库验证通过）：
   PostgreSQL 函数 `public.update_favorite_note(uid text, song_id text, note text)`（`SECURITY DEFINER`）
-- 公网地址（执行 SQL 后可用）：
+- 公网地址（已可用）：
   ```
   https://wtqzywartwuyzeiiqlyb.supabase.co/rest/v1/rpc/update_favorite_note?apikey=sb_publishable_0NtBaZMaYbW605haSsqhUA_rifL8HCO
   ```
@@ -145,10 +145,10 @@
   - 备注超过 200 字 → `{ "ok": false, "error": "备注太长（最多 200 字），请删减后再保存" }`
   - 收藏不存在 → `{ "ok": false, "error": "收藏不存在：<id>（要先收藏这首歌才能改备注）" }`（**绝不静默成功**）
 
-### 2.5 `DELETE /api/favorites/:song_id`（取消收藏）✅ 代码就绪 · SQL 待执行（Day 22）
+### 2.5 `DELETE /api/favorites/:song_id`（取消收藏）✅ 已实现（Day 22 · SQL 已于 2026-10-21 执行生效）
 
 - 服务端实现：PostgreSQL 函数 `public.delete_favorite(uid text, song_id text)`（`SECURITY DEFINER`，物理删除）
-- 公网地址（执行 SQL 后可用）：
+- 公网地址（已可用）：
   ```
   https://wtqzywartwuyzeiiqlyb.supabase.co/rest/v1/rpc/delete_favorite?apikey=sb_publishable_0NtBaZMaYbW605haSsqhUA_rifL8HCO
   ```
@@ -163,7 +163,7 @@
   - 收藏不存在 → `{ "ok": false, "data": { ..., "missing": true }, "error": "这条收藏不存在或已被删除：<id>" }`（删不存在的不算成功，也不崩）
 - 二次确认：由**前端**负责（歌曲页收藏按钮与检查台删除按钮都会先弹 `confirm`，用户确认后才发 DELETE）。
 
-### 2.6 `GET /api/favorites/detail?uid=<uid>`（收藏明细，Day 22 新增）✅ 代码就绪 · SQL 待执行
+### 2.6 `GET /api/favorites/detail?uid=<uid>`（收藏明细，Day 22 新增）✅ 已实现（SQL 已于 2026-10-21 执行生效）
 
 - 服务端实现：PostgreSQL 函数 `public.get_favorites_detail(uid text)`
 - 方法：GET / POST（参数 `uid` 必填）
