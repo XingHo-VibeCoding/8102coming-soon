@@ -1,0 +1,67 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>Day 25 · verify-project 实跑证据</title>
+<style>body{margin:0;padding:26px 30px;background:#f6f6f2;color:#1b1b1f;font:14px/1.6 "Segoe UI","Microsoft YaHei",sans-serif}
+h1{font-size:19px;margin:0 0 4px}.sub{color:#5b5b66;font-size:12.5px;margin-bottom:14px}
+h2{font-size:15px;margin:14px 0 8px}
+pre{background:#101418;color:#d6e2d0;border-radius:10px;padding:14px 16px;font:12px/1.7 Consolas,monospace;white-space:pre-wrap;word-break:break-all;margin:0}
+.fail h2{color:#b03a2e}.good h2{color:#1f7a4d}
+.note{margin-top:12px;font-size:12.5px;color:#5b5b66}</style></head><body>
+<h1>verify-project Skill 实跑证据（Day 25）</h1>
+<div class="sub">命令：python scripts/verify_project.py · 左：故意注入假密钥后的运行 · 右：清除故障后的运行</div>
+<table style="width:100%;border-collapse:separate;border-spacing:12px 0"><tr>
+<td class="fail" style="width:50%;vertical-align:top"><h2>① 故意留问题 → 被查出来（FAIL，退出码 1）</h2><pre>================================================================
+verify-project · 世末歌者发布前检查
+================================================================
+[PASS] 1 公网首页可访问
+      证据: HTTP 200，标题命中=是，https://xingho-vibecoding.github.io/8102coming-soon/
+[PASS] 2 线上代码与仓库同步
+      证据: 线上 js/app.js HTTP 200，含版本标记「Day 24」=是
+[PASS] 3 核心读接口 get_songs
+      证据: HTTP 200，ok=True，条数=37（应为 37）
+[PASS] 4 收藏读接口 get_favorites
+      证据: HTTP 200，ok=True，data 类型=list
+[PASS] 5 接口存在性 update_favorite_note
+      证据: HTTP 405 返回 25006 read-only = 函数存在且可执行（GET 只读事务拒绝写入，无副作用）
+[PASS] 5 接口存在性 delete_favorite
+      证据: HTTP 405 返回 25006 read-only = 函数存在且可执行（GET 只读事务拒绝写入，无副作用）
+[PASS] 6 收藏明细接口 get_favorites_detail
+      证据: HTTP 200，ok=True，data 长度=0
+[FAIL] 7 密钥不泄漏（赋值/引用 0 命中）
+      证据: 2 处命中：JWT → _fault_injection.tmp:2；带口令连接串 → _fault_injection.tmp:3
+[PASS] 8 .gitignore 完整性
+      证据: .env 忽略规则命中：是（6）；.env.example 已入库：是（.env.example）
+[PASS] 9 Git 历史无密钥提交（真密钥形状抽查）
+      证据: 抽查 sb_secret 真值 / 连接串内嵌口令 / JWT 真值三类形状，0 个提交命中（文档字样与 &lt;占位符&gt; 不算）
+----------------------------------------------------------------
+汇总：共 10 项：PASS 9 / FAIL 1 / 未执行 0
+结论：存在 FAIL，禁止发布，先修复再重跑
+</pre></td>
+<td class="good" style="width:50%;vertical-align:top"><h2>② 清除故障后 → 全部 PASS（退出码 0）</h2><pre>================================================================
+verify-project · 世末歌者发布前检查
+================================================================
+[PASS] 1 公网首页可访问
+      证据: HTTP 200，标题命中=是，https://xingho-vibecoding.github.io/8102coming-soon/
+[PASS] 2 线上代码与仓库同步
+      证据: 线上 js/app.js HTTP 200，含版本标记「Day 24」=是
+[PASS] 3 核心读接口 get_songs
+      证据: HTTP 200，ok=True，条数=37（应为 37）
+[PASS] 4 收藏读接口 get_favorites
+      证据: HTTP 200，ok=True，data 类型=list
+[PASS] 5 接口存在性 update_favorite_note
+      证据: HTTP 405 返回 25006 read-only = 函数存在且可执行（GET 只读事务拒绝写入，无副作用）
+[PASS] 5 接口存在性 delete_favorite
+      证据: HTTP 405 返回 25006 read-only = 函数存在且可执行（GET 只读事务拒绝写入，无副作用）
+[PASS] 6 收藏明细接口 get_favorites_detail
+      证据: HTTP 200，ok=True，data 长度=0
+[PASS] 7 密钥不泄漏（赋值/引用 0 命中）
+      证据: 工作区 0 命中（含未跟踪文件；sb_publishable_ 为公开前端 key 已白名单；文档正文字样提及不算）
+[PASS] 8 .gitignore 完整性
+      证据: .env 忽略规则命中：是（6）；.env.example 已入库：是（.env.example）
+[PASS] 9 Git 历史无密钥提交（真密钥形状抽查）
+      证据: 抽查 sb_secret 真值 / 连接串内嵌口令 / JWT 真值三类形状，0 个提交命中（文档字样与 &lt;占位符&gt; 不算）
+----------------------------------------------------------------
+汇总：共 10 项：PASS 10 / FAIL 0 / 未执行 0
+结论：可以发布
+</pre></td>
+</tr></table>
+<div class="note">注入的故障：临时文件 _fault_injection.tmp 内含两行假密钥赋值（演练用，非真实密钥），Skill 第 7 项准确指出 文件:行号 并给出「禁止发布」结论；删除该文件后第 7 项恢复 PASS。该文件未进 Git，演练后已删除。</div>
+</body></html>
