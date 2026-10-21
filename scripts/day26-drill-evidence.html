@@ -1,0 +1,26 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>Day 26 · 回滚演练证据</title>
+<style>
+body{margin:0;padding:26px 30px;background:#f6f6f2;color:#1b1b1f;font:14px/1.6 "Segoe UI","Microsoft YaHei",sans-serif}
+h1{font-size:19px;margin:0 0 4px} .sub{color:#5b5b66;font-size:12.5px;margin-bottom:16px}
+h2{font-size:14px;margin:16px 0 8px}
+pre{background:#101418;color:#d6e2d0;border-radius:10px;padding:16px 18px;font:13px/1.8 Consolas,monospace;margin:0}
+table{border-collapse:collapse;width:100%;background:#fff;border-radius:10px;overflow:hidden;font-size:12.5px}
+td{border-bottom:1px solid #ececea;padding:7px 12px} td:first-child{color:#5b5b66;width:44%}
+.key td{background:#fff7e6;font-weight:700}
+</style></head><body>
+<h1>Day 26 · 回滚演练证据（静态托管回退路径）</h1>
+<div class="sub">演练对象：https://xingho-vibecoding.github.io/8102coming-soon/ · 方式：git revert 坏提交 → Pages 自动重部署 · 全程真实执行</div>
+<h2>① 回滚前后的提交记录（git log --graph --decorate）</h2>
+<pre>* 9b54e54 (HEAD -&gt; main, origin/main, origin/HEAD) （演练）恢复 v1.0 内容：结束回滚演练，index.html 回到 v1.0
+* e09f403 Reapply &quot;Reapply &quot;（演练）模拟 v1.1 上线：页面出现坏版本横幅&quot;&quot;
+* bfc8732 Revert &quot;Reapply &quot;（演练）模拟 v1.1 上线：页面出现坏版本横幅&quot;&quot;
+* ec86745 Reapply &quot;（演练）模拟 v1.1 上线：页面出现坏版本横幅&quot;
+* c3a45a7 Revert &quot;（演练）模拟 v1.1 上线：页面出现坏版本横幅&quot;
+* 71314d8 （演练）模拟 v1.1 上线：页面出现坏版本横幅
+* 3778cc1 (tag: v1.0) Day 25｜制作 verify-project 发布前检查 Skill 并实跑验证
+* a2e9af1 Day 22｜收尾：SQL 已在真库执行，PATCH/DELETE 真库验证通过
+</pre>
+<h2>② 耗时硬数据（docs/drill-day26.json）</h2>
+<table><tr><td>演练日期</td><td>2026-10-21</td></tr><tr><td>站点</td><td>https://xingho-vibecoding.github.io/8102coming-soon/</td></tr><tr><td>演练路径</td><td>静态托管回退（git revert + GitHub Pages 自动重部署）</td></tr><tr><td>时间线</td><td>{&#x27;T0_v1.0_baseline&#x27;: &#x27;2026-10-21 17:30:51&#x27;, &#x27;bad_commit&#x27;: &#x27;71314d8（（演练）模拟 v1.1 上线：页面出现坏版本横幅）&#x27;, &#x27;T_BAD_PUSHED&#x27;: &#x27;2026-10-21 17:41:37&#x27;, &#x27;T_BAD_LIVE&#x27;: &#x27;2026-10-21 17:43:08&#x27;, &#x27;bad_deploy_sec&#x27;: 71.9, &#x27;T_ROLLBACK_START&#x27;: &#x27;2026-10-21 17:44:16&#x27;, &#x27;revert_commit&#x27;: &#x27;ec86745&#x27;, &#x27;T_ROLLBACK_PUSHED&#x27;: &#x27;2026-10-21 17:44:25&#x27;, &#x27;T_FIX_PUSHED&#x27;: &#x27;2026-10-21 17:46:20 / 18:04:00（中间经历一次 SSH 瞬断与重试）&#x27;, &#x27;restore_commit&#x27;: &#x27;9b54e54（恢复 v1.0 内容：结束回滚演练）&#x27;, &#x27;T_RECOVERED&#x27;: &#x27;2026-10-21 18:05:20&#x27;, &#x27;restore_deploy_sec&#x27;: 34.9}</td></tr><tr><td>关键耗时</td><td>{&#x27;坏版本_推送到公网可见&#x27;: &#x27;71.9 秒（1.2 分钟）&#x27;, &#x27;发现到执行回滚命令&#x27;: &#x27;约 1 分钟（17:43:08 → 17:44:16）&#x27;, &#x27;恢复部署等待&#x27;: &#x27;34.9 秒&#x27;, &#x27;全程_坏版本可见到公网恢复&#x27;: &#x27;22.2 分钟（17:43:08 → 18:05:20）&#x27;}</td></tr><tr><td>意外事件如实记录</td><td>[&#x27;第一次推送坏版本时 SSH 瞬断（Connection reset），后台脚本在推送失败的情况下进入死等，被人工终止；但其残留进程继续运行并自行执行了一次 revert（c3a45a7），与人工操作交错，造成 c3a45a7/ec86745/bfc8732/e09f403 四次反复提交，线上横幅一度消失又出现。&#x27;, &#x27;17:47:05 的恢复推送再次遇到 SSH 瞬断（Connection refused），重试后于 18:04:00 成功。&#x27;, &#x27;最终以 git checkout v1.0 -- index.html + 单次提交（9b54e54）一次性落定，杜绝继续反复。&#x27;]</td></tr><tr><td>教训</td><td>[&#x27;回滚命令本身只需几秒，真正的大头是等部署（1 分钟上下）——真出事时要给用户预期「几分钟内恢复」。&#x27;, &#x27;绝不能有多个自动化进程同时操作同一分支：残留进程的自动 revert 与人工操作互相打架，把 1 分钟的事拖成了 20 分钟。演练无意间暴露并复现了这个风险，比一次干净的演练更有教学价值。&#x27;, &#x27;每次回滚后必须用带随机参数的 URL 验证公网实际内容，不能信本地 git 状态。&#x27;, &#x27;SSH 偶发瞬断要有重试，推送失败不能假设没生效，也不能假设生效了——一律以 ls-remote 为准。&#x27;]</td></tr><tr><td>验证</td><td>{&#x27;恢复后 verify-project&#x27;: &#x27;10 项全 PASS，退出码 0（scripts/verify-report-day26-v1.0.txt）&#x27;, &#x27;恢复后公网截图&#x27;: &#x27;screenshots/day26-after-rollback.png&#x27;, &#x27;坏版本上线证据&#x27;: &#x27;screenshots/day26-bad-live.png&#x27;}</td></tr></table>
+</body></html>
