@@ -1,0 +1,40 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>Day 28 · 附录 J 最终验收</title>
+<style>body{margin:0;padding:26px 34px;background:#fafaf7;color:#1b1b1f;font:14px/1.7 "Segoe UI","Microsoft YaHei",sans-serif}
+h1{font-size:19px;margin:0 0 4px}.sub{color:#5b5b66;font-size:12.5px;margin-bottom:14px}
+h2{font-size:15px;margin:18px 0 8px;color:#1f4e79}
+table{border-collapse:collapse;width:100%;background:#fff;font-size:13px;border:1px solid #e3e3e8}
+th,td{border:1px solid #e3e3e8;padding:7px 12px;text-align:left;vertical-align:top}
+th{background:#eef3f8}
+.ok{color:#1f7a4d;font-weight:700}.warn{color:#b45309;font-weight:700}
+.score{margin-top:14px;padding:12px 16px;border-radius:10px;background:#f1f8f4;color:#1f7a4d;font-weight:700}
+</style></head><body>
+<h1>附录 J · 100 分最终验收（验收官两轮核验后）</h1>
+<div class="sub">项目：世末歌者 v1.0 · 公网：https://xingho-vibecoding.github.io/8102coming-soon/ · tag v1.0 → 3778cc1</div>
+
+<h2>一、100 分验收表（8 项）</h2>
+<table>
+<tr><th style="width:30%">验收项</th><th style="width:12%">分值</th><th style="width:12%">判定</th><th>关键证据</th></tr>
+<tr><td>1 提示词理解与改写</td><td>20</td><td class="ok">对上</td><td>AGENTS.md 七类约定 + 第六节改写提示词</td></tr>
+<tr><td>2 前端页面与交互</td><td>15</td><td class="ok">对上</td><td>5 视图 + 四态截图 day13-states + 收藏反馈 day11-after + 移动端 day14-*-mobile</td></tr>
+<tr><td>3 云函数与 API</td><td>15</td><td class="ok">对上</td><td>api-contract.md 7 个 RPC；验收官实测 get_songs 37 条</td></tr>
+<tr><td>4 云数据库</td><td>15</td><td class="ok">对上</td><td>幂等 SQL 脚本 + day22-real-patch/delete（真库改/删）+ day20 持久化实测</td></tr>
+<tr><td>5 第三周周成果</td><td>10</td><td class="ok">对上</td><td>LAYERING.md + WEEK3-REVIEW.md + 4 张手机截图</td></tr>
+<tr><td>6 Skill 与测试</td><td>10</td><td class="ok">对上</td><td>verify-report PASS 10/10 + 故障注入 FAIL-drill 被抓出 + bug-report-day24 回归</td></tr>
+<tr><td>7 线上发布</td><td>10</td><td class="ok">对上</td><td>tag v1.0 远端可查 + 回滚演练硬数据（rollback-manual 第五节）</td></tr>
+<tr><td>8 额度、到期和备份</td><td>5</td><td class="warn">基本对上</td><td>songs 备份 37 条 0 密钥 + 资源检查清单；控制台截图与 favorites CSV 待用户补</td></tr>
+</table>
+<div class="score">验收官两轮核验最终判定：通过 · 95–97 / 100（无虚报，证据跨文件互证；扣分点仅第 8 项 2 个用户侧凭证未归档）</div>
+
+<h2>二、结营交付清单（8 项）</h2>
+<table>
+<tr><th style="width:55%">交付项</th><th style="width:12%">状态</th><th>位置</th></tr>
+<tr><td>公网地址</td><td class="ok">✅</td><td>https://xingho-vibecoding.github.io/8102coming-soon/</td></tr>
+<tr><td>代码仓库链接</td><td class="ok">✅</td><td>github.com/XingHo-VibeCoding/8102coming-soon</td></tr>
+<tr><td>3–5 分钟演示录屏</td><td class="warn">⏳ 待录制</td><td>提纲已备好（FINAL-ACCEPTANCE.md）</td></tr>
+<tr><td>最终验收表和项目映射表</td><td class="ok">✅</td><td>FINAL-ACCEPTANCE.md</td></tr>
+<tr><td>一条最有效的改写提示词</td><td class="ok">✅</td><td>FINAL-ACCEPTANCE.md 第六节</td></tr>
+<tr><td>运行和技术路线说明</td><td class="ok">✅</td><td>FINAL-ACCEPTANCE.md 第五节</td></tr>
+<tr><td>数据库、部署、额度、到期和备份说明（不含密钥）</td><td class="ok">✅</td><td>backups/README.md + day27-resource-check.md + rollback-manual.md</td></tr>
+<tr><td>200 字以内结营总结</td><td class="ok">✅ 草稿</td><td>FINAL-ACCEPTANCE.md 第七节</td></tr>
+</table>
+</body></html>

@@ -1,0 +1,21 @@
+===== 第 1 遍（独立全新浏览器身份，退出码 0）=====
+
+[drive] 页面: https://xingho-vibecoding.github.io/8102coming-soon/#/status
+[drive] 检查台已就绪，接口通
+[drive] 写入: ✓ 写入成功：xiafeng 已落库；读回 1 条收藏，其中包含这条。
+[drive] 改备注: ✓ 备注已改：读回明细，xiafeng 的 note 从「（空）」变成「测试-改」，与输入一致。
+[drive] 截图1（改备注）: C:/Users/Administrator/Desktop/世末歌者/screenshots/day22-real-patch.png
+[drive] 删收藏: ✓ 已删除：删除前列表 1 条（含 xiafeng），删除后读回 0 条，这条已经不在 GET 结果里。
+[drive] 截图2（删收藏）: C:/Users/Administrator/Desktop/世末歌者/screenshots/day22-real-delete.png
+[drive] 控制台: [info] [store] 已从云端加载 0 条收藏 | [info] [store] 已从云端加载 37 首真实歌曲（1350ms）
+
+===== 第 2 遍（独立全新浏览器身份，退出码 0）=====
+
+[drive] 页面: https://xingho-vibecoding.github.io/8102coming-soon/#/status
+[drive] 检查台已就绪，接口通
+[drive] 写入: ✓ 写入成功：xiafeng 已落库；读回 1 条收藏，其中包含这条。
+[drive] 改备注: ✓ 备注已改：读回明细，xiafeng 的 note 从「（空）」变成「测试-改」，与输入一致。
+[drive] 截图1（改备注）: C:/Users/Administrator/Desktop/世末歌者/screenshots/day22-real-patch.png
+[drive] 删收藏: ✓ 已删除：删除前列表 1 条（含 xiafeng），删除后读回 0 条，这条已经不在 GET 结果里。
+[drive] 截图2（删收藏）: C:/Users/Administrator/Desktop/世末歌者/screenshots/day22-real-delete.png
+[drive] 控制台: [info] [store] 已从云端加载 0 条收藏 | [info] [store] 已从云端加载 37 首真实歌曲（710ms）
