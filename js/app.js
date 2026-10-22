@@ -420,6 +420,10 @@ function setupFilters() {
 
   const state = { singer: "", keyword: "" };
   let wasActive = false; // 仅从「无筛选」切到「有筛选」时滚动一次，避免每次按键都跳
+  // 筛选生效时把结果区搬到搜索框正下方（#home-content 首位），清空后搬回原位（末尾）。
+  // 背景：结果区原本排在系列曲/推荐区之后、离搜索框数屏远，桌面端打字看不见变化。
+  const homeContent = list.closest("#home-content");
+  const section = list.closest(".all-songs-section");
 
   // 按 state 重画列表 + 条件条（不清输入框、不重绘按钮，焦点保住）
   const apply = () => {
@@ -431,10 +435,18 @@ function setupFilters() {
     }
     setupRevealAnimation();
 
-    // 所有宽度：筛选后把结果滚动到可见区，否则用户看不到列表变化、以为搜索是摆设
-    // （结果列表在搜索框下方数屏处——系列曲/推荐区竖排在中间；仅在「开始筛选」那一刻滚动一次，
-    //   列表本来就在视口内则不滚。原先只对 ≤600px 生效，桌面端打字同样看不见变化，已放开。）
     const active = !!(state.keyword || state.singer);
+
+    // 结果区随筛选状态前移/归位（输入框在 header 里，不在被搬的节点内，焦点不受影响）
+    if (homeContent && section) {
+      if (active && !wasActive) {
+        homeContent.insertBefore(section, homeContent.firstElementChild);
+      } else if (!active && wasActive) {
+        homeContent.appendChild(section);
+      }
+    }
+
+    // 兜底：万一搬完结果区仍不在视口内（如输入时页面停在很下方），滚一次到可见区
     if (active && !wasActive) {
       const box = document.querySelector(".search-box");
       const boxH = box ? box.getBoundingClientRect().height : 0;
