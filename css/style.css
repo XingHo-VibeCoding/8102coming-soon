@@ -73,7 +73,10 @@ body {
 }
 
 .song-card {
-  display: block;
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
   padding: 22px 24px;
   border-radius: 16px;
   background: var(--card-bg);
@@ -82,6 +85,33 @@ body {
   text-decoration: none;
   transition: transform 0.25s ease, background 0.25s ease;
 }
+
+/* 卡片封面：B站投稿封面（约定路径 assets/covers/<id>.jpg）。
+   加载失败时 img 被 JS 移除，露出色块 + 歌名首字兜底（无 B站链接的 6+1 首）。 */
+.card-media {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 10;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--card-border);
+}
+.card-media::before {
+  content: attr(data-initial);
+  font-size: 28px;
+  color: var(--text-dim);
+}
+.card-cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.card-body { min-width: 0; }
 
 .song-card:hover {
   transform: translateY(-3px);
@@ -1371,6 +1401,13 @@ body {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+  }
+
+  /* 卡片封面：窄屏缩到 76px，省出文字宽度 */
+  .song-card {
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 10px;
+    padding: 16px 14px;
   }
 
   .song-title {

@@ -701,8 +701,16 @@ function songCard(song) {
   const badges = song.badges
     .map((b) => `<span class="badge">${escapeHtml(b)}</span>`)
     .join("");
+  // 封面：约定路径 assets/covers/<歌曲id>.jpg（B站投稿封面，构建期抓取入库）。
+  // 没有 B站链接/封面文件的歌，img 加载失败自动移除，露出色块+歌名首字兜底。
+  const media = `
+    <span class="card-media" data-initial="${escapeHtml(song.title.slice(0, 1))}" aria-hidden="true">
+      <img class="card-cover" src="assets/covers/${escapeHtml(song.id)}.jpg" alt="" loading="lazy" onerror="this.remove()">
+    </span>`;
   return `
     <a class="song-card reveal" href="#/song/${escapeHtml(song.id)}">
+      ${media}
+      <div class="card-body">
       <div class="card-head">
         <h2 class="card-title">${escapeHtml(song.title)}</h2>
         <div class="card-badges">${badges}</div>
@@ -711,5 +719,6 @@ function songCard(song) {
       <p class="card-intro">${escapeHtml(song.intro)}</p>
       ${seriesTag}
       ${favButton(song.id, "card")}
+      </div>
     </a>`;
 }
