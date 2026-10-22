@@ -431,10 +431,11 @@ function setupFilters() {
     }
     setupRevealAnimation();
 
-    // 手机端：筛选后把结果滚动到可见区，否则用户看不到列表变化、以为搜索是摆设
-    // （结果在搜索框下方约 2 屏处；仅窄屏、且仅在「开始筛选」那一刻滚动一次）
+    // 所有宽度：筛选后把结果滚动到可见区，否则用户看不到列表变化、以为搜索是摆设
+    // （结果列表在搜索框下方数屏处——系列曲/推荐区竖排在中间；仅在「开始筛选」那一刻滚动一次，
+    //   列表本来就在视口内则不滚。原先只对 ≤600px 生效，桌面端打字同样看不见变化，已放开。）
     const active = !!(state.keyword || state.singer);
-    if (active && !wasActive && window.innerWidth <= 600) {
+    if (active && !wasActive) {
       const box = document.querySelector(".search-box");
       const boxH = box ? box.getBoundingClientRect().height : 0;
       const rect = list.getBoundingClientRect();
