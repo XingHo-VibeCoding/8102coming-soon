@@ -507,6 +507,48 @@ body {
   color: var(--text-dim);
 }
 
+/* ---------- 三维筛选面板（2026-10-22）：虚拟歌姬 / 作者 / 系列曲 ---------- */
+.filter-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 12px;
+}
+
+.filter-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filter-label {
+  flex: 0 0 auto;
+  min-width: 84px;
+  padding: 8px 0 0;
+  font-size: 13px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .filter-group {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .filter-label {
+    padding-top: 0;
+  }
+}
+
 .singer-chip[aria-pressed="true"] .chip-count {
   color: var(--text-soft);
 }

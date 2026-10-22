@@ -28,8 +28,8 @@ const Render = {
         ${Render.hotList(Store.getHotSongs(3))}
         <section class="all-songs-section">
           <h2 class="section-title">🎵 全部歌曲</h2>
-          ${Render.singerFilterBar("")}
-          <p class="filter-status" id="filter-status" role="status">${Render.filterStatusText("", "", Store.getAllSongs().length)}</p>
+          ${Render.filterPanel()}
+          <p class="filter-status" id="filter-status" role="status">${Render.filterStatusText({}, Store.getAllSongs().length)}</p>
           <div class="card-list" id="card-list">${Render.songGroups(Store.getAllSongs(), { collapsed: true })}</div>
         </section>`;
     }
@@ -258,17 +258,52 @@ const Render = {
    * 也自动被 css/style.css 的 button:focus-visible 焦点圈覆盖。
    * aria-pressed 表达「当前选中」，读屏器能播报。
    */
-  singerFilterBar(activeSinger) {
-    const chip = (value, label, on, count) => `
-      <button class="singer-chip" type="button" data-singer="${escapeHtml(value)}" aria-pressed="${on}">
+  /**
+   * 首页筛选面板（2026-10-22 扩为三维）：虚拟歌姬 / 作者 / 系列曲。
+   * 每个维度一组 chip，组内单选（再点同项取消 = 该维度不限）；三个维度与关键词互相叠加。
+   * 维度名放在 state 的 singer / author / series（series 存系列 id，名字可能改、id 稳定）。
+   */
+  filterPanel(state = {}) {
+    const s = state || {};
+    const total = Store.getAllSongs().length;
+    const chip = (kind, value, label, on, count) => `
+      <button class="singer-chip" type="button" data-kind="${kind}" data-value="${escapeHtml(value)}" aria-pressed="${on}">
         ${escapeHtml(label)} <span class="chip-count">${count}</span>
       </button>`;
+    const group = (kind, icon, title, chips) => `
+      <div class="filter-group" data-kind="${kind}" role="group" aria-label="按${title}筛选">
+        <span class="filter-label">${icon} ${title}</span>
+        <div class="filter-chips">
+          ${chip(kind, "", "全部", !s[kind], total)}
+          ${chips}
+        </div>
+      </div>`;
     return `
-      <div class="singer-filter" id="singer-filter" role="group" aria-label="按虚拟歌手筛选">
-        ${chip("", "全部", !activeSinger, Store.getAllSongs().length)}
-        ${Store.getSingers()
-          .map((s) => chip(s.name, s.name, activeSinger === s.name, s.count))
-          .join("")}
+      <div class="filter-panel" id="filter-panel">
+        ${group(
+          "singer",
+          "🎤",
+          "虚拟歌姬",
+          Store.getSingers()
+            .map((x) => chip("singer", x.name, x.name, s.singer === x.name, x.count))
+            .join("")
+        )}
+        ${group(
+          "author",
+          "✍️",
+          "作者",
+          Store.getAuthors()
+            .map((x) => chip("author", x.name, x.name, s.author === x.name, x.count))
+            .join("")
+        )}
+        ${group(
+          "series",
+          "📚",
+          "系列曲",
+          Store.getSeriesOptions()
+            .map((x) => chip("series", x.id, x.name, s.series === x.id, x.count))
+            .join("")
+        )}
       </div>`;
   },
 
@@ -276,10 +311,16 @@ const Render = {
    * 当前筛选条件与结果条数（Day 12）：让用户一眼看到「筛了什么、剩几首」。
    * 纯文本（不给标签），便于原地更新而不重建节点 —— 更新时不会打断读屏焦点。
    */
-  filterStatusText(singer, keyword, count) {
+  filterStatusText(state, count) {
+    const s = state || {};
     const parts = [];
-    if (singer) parts.push(`歌手：${singer}`);
-    const kw = String(keyword || "").trim();
+    if (s.singer) parts.push(`歌姬：${s.singer}`);
+    if (s.author) parts.push(`作者：${s.author}`);
+    if (s.series) {
+      const meta = SERIES.find((x) => x.id === s.series);
+      parts.push(`系列：${meta ? meta.name : s.series}`);
+    }
+    const kw = String(s.keyword || "").trim();
     if (kw) parts.push(`关键词：${kw}`);
     return `${parts.length ? parts.join(" · ") : "未筛选"} · 共 ${count} 首`;
   },
@@ -329,20 +370,27 @@ const Render = {
 
   /**
    * 搜索结果列表（F4）：只重绘 #card-list，不整页刷新，输入框不丢焦点。
+   * 入参是筛选状态对象 { singer, author, series, keyword }（2026-10-22 起支持三维筛选）。
    * 无匹配时显示空状态（PRD D4：不清屏、不报错），并写明当前筛选条件（Day 12）。
    */
-  filteredList(keyword, singer) {
-    const kw = String(keyword || "").trim();
-    const sg = String(singer || "").trim();
-    const songs = Store.filterSongs(sg, kw);
+  filteredList(state = {}) {
+    const s = state || {};
+    const kw = String(s.keyword || "").trim();
+    const songs = Store.filterSongs(s);
     if (songs.length === 0) {
-      const cond = [sg && `歌手「${sg}」`, kw && `关键词「${kw}」`]
+      const seriesMeta = s.series ? SERIES.find((x) => x.id === s.series) : null;
+      const cond = [
+        s.singer && `歌姬「${s.singer}」`,
+        s.author && `作者「${s.author}」`,
+        s.series && `系列「${seriesMeta ? seriesMeta.name : s.series}」`,
+        kw && `关键词「${kw}」`,
+      ]
         .filter(Boolean)
         .join(" + ");
       return `
         <div class="empty-state">
           <p class="empty-text">没有找到相关歌曲${cond ? `（当前条件：${escapeHtml(cond)}）` : ""}</p>
-          <p class="empty-hint">换个歌手，或点下面的按钮清空条件。</p>
+          <p class="empty-hint">换个条件，或点下面的按钮清空筛选。</p>
           <button class="btn" id="clear-filters" type="button">清空筛选条件</button>
         </div>
       `;

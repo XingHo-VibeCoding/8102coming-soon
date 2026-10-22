@@ -167,7 +167,7 @@ const Store = {
   },
 
   /**
-   * 搜索歌曲（F4）：按曲名 / 虚拟歌手 / 系列名匹配，大小写不敏感。
+   * 搜索歌曲（F4）：按曲名 / 虚拟歌手 / 作者 / 系列名匹配，大小写不敏感。
    * 空关键词返回全部。
    */
   searchSongs(keyword) {
@@ -187,6 +187,7 @@ const Store = {
       (song) =>
         song.title.toLowerCase().includes(kw) ||
         song.singer.toLowerCase().includes(kw) ||
+        String(song.author || "").toLowerCase().includes(kw) ||
         (seriesNames[song.id] || []).some((name) => name.includes(kw))
     );
   },
@@ -221,14 +222,69 @@ const Store = {
   },
 
   /**
-   * 筛选歌曲（Day 12）：歌手 + 关键词，两者叠加生效（同时满足才留下）。
-   * singer 传空字符串表示不限歌手；关键词沿用 searchSongs 的匹配规则。
+   * 拆分 author 字段为作者名数组（2026-10-22 新增，配合「按作者筛选」）。
+   * 数据形如「JUSF周存（曲/词/编/调）· sya（绘/PV）」「DELA（曲）· 雨狸（词）」：
+   * 先去掉括号里的分工说明，再按 ·、,，/ 拆分，去空格去空值。
    */
-  filterSongs(singer, keyword) {
-    const sg = String(singer || "").trim();
-    const songs = Store.searchSongs(keyword);
-    if (!sg) return songs;
-    return songs.filter((song) => Store.splitSingers(song.singer).indexOf(sg) !== -1);
+  splitAuthors(author) {
+    return String(author || "")
+      .replace(/[（(][^）)]*[）)]/g, " ")
+      .split(/[·、,，/]/)
+      .map((name) => name.trim())
+      .filter(Boolean);
+  },
+
+  /** 全部作者 + 各自歌曲数（按曲数降序），供首页筛选按钮使用 */
+  getAuthors() {
+    const counts = new Map();
+    Store.getAllSongs().forEach((song) => {
+      Store.splitAuthors(song.author).forEach((name) => {
+        counts.set(name, (counts.get(name) || 0) + 1);
+      });
+    });
+    return [...counts.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "zh"));
+  },
+
+  /** 全部系列 + 各自歌曲数（只算数据里真实存在的歌），供首页筛选按钮使用 */
+  getSeriesOptions() {
+    return SERIES.map((s) => ({
+      id: s.id,
+      name: s.name,
+      count: s.songIds.filter((sid) => !!Store.getSongById(sid)).length,
+    })).filter((s) => s.count > 0);
+  },
+
+  /**
+   * 筛选歌曲：虚拟歌姬 / 作者 / 系列 / 关键词，四者叠加生效（同时满足才留下）。
+   * 入参是对象 { singer, author, series, keyword }，任一项为空表示该维度不限。
+   * 兼容旧写法 filterSongs(singer, keyword)（仍有老调用方）。
+   * series 传系列 id（不是系列名），因为系列名可能改、id 稳定。
+   */
+  filterSongs(criteria, legacyKeyword) {
+    const c =
+      typeof criteria === "string" || criteria == null
+        ? { singer: criteria, keyword: legacyKeyword }
+        : criteria;
+    const singer = String(c.singer || "").trim();
+    const author = String(c.author || "").trim();
+    const series = String(c.series || "").trim();
+
+    let songs = Store.searchSongs(c.keyword);
+    if (singer) {
+      songs = songs.filter((song) => Store.splitSingers(song.singer).indexOf(singer) !== -1);
+    }
+    if (author) {
+      songs = songs.filter((song) => Store.splitAuthors(song.author).indexOf(author) !== -1);
+    }
+    if (series) {
+      const meta = SERIES.find((s) => s.id === series);
+      songs = songs.filter(
+        (song) => !!meta && meta.songIds.indexOf(song.id) !== -1
+      );
+    }
+    return songs;
   },
 
   // ---------- 收藏（Day 11 建形 · Day 18 接云端写入 · Day 22 补改/删）----------

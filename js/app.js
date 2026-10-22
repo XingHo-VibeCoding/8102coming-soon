@@ -415,27 +415,30 @@ function renderSong(app, song) {
 function setupFilters() {
   const input = document.getElementById("search-input");
   const list = document.getElementById("card-list");
-  const bar = document.getElementById("singer-filter");
+  const bar = document.getElementById("filter-panel");
   if (!input || !list || !bar) return;
 
-  const state = { singer: "", keyword: "" };
+  // 四个维度：虚拟歌姬 / 作者 / 系列曲 / 关键词，互相叠加（2026-10-22 起从单一歌手维度扩展）
+  const state = { singer: "", author: "", series: "", keyword: "" };
   let wasActive = false; // 仅从「无筛选」切到「有筛选」时滚动一次，避免每次按键都跳
   // 筛选生效时把结果区搬到搜索框正下方（#home-content 首位），清空后搬回原位（末尾）。
   // 背景：结果区原本排在系列曲/推荐区之后、离搜索框数屏远，桌面端打字看不见变化。
   const homeContent = list.closest("#home-content");
   const section = list.closest(".all-songs-section");
 
+  const isActive = () => !!(state.singer || state.author || state.series || state.keyword);
+
   // 按 state 重画列表 + 条件条（不清输入框、不重绘按钮，焦点保住）
   const apply = () => {
-    const songs = Store.filterSongs(state.singer, state.keyword);
-    list.innerHTML = Render.filteredList(state.keyword, state.singer);
+    const songs = Store.filterSongs(state);
+    list.innerHTML = Render.filteredList(state);
     const status = document.getElementById("filter-status");
     if (status) {
-      status.textContent = Render.filterStatusText(state.singer, state.keyword, songs.length);
+      status.textContent = Render.filterStatusText(state, songs.length);
     }
     setupRevealAnimation();
 
-    const active = !!(state.keyword || state.singer);
+    const active = isActive();
 
     // 结果区随筛选状态前移/归位（输入框在 header 里，不在被搬的节点内，焦点不受影响）
     if (homeContent && section) {
@@ -463,7 +466,8 @@ function setupFilters() {
   // 把按钮的选中态同步到 state（只改 aria-pressed，不重建按钮节点）
   const syncChips = () => {
     bar.querySelectorAll(".singer-chip").forEach((chip) => {
-      chip.setAttribute("aria-pressed", String((chip.dataset.singer || "") === state.singer));
+      const kind = chip.dataset.kind || "singer";
+      chip.setAttribute("aria-pressed", String((chip.dataset.value || "") === state[kind]));
     });
   };
 
@@ -472,12 +476,14 @@ function setupFilters() {
     apply();
   });
 
-  // 筛选按钮：点一次选中，再点同一位歌手即取消（回到「全部」）
+  // 筛选按钮：组内单选，点一次选中，再点同项即取消（回到该维度的「全部」）。
+  // 三个维度互不影响，可叠加（如「乐正绫 + JUSF周存 + 双向系列」）。
   bar.addEventListener("click", (e) => {
     const chip = e.target.closest(".singer-chip");
     if (!chip) return;
-    const value = chip.dataset.singer || "";
-    state.singer = state.singer === value ? "" : value;
+    const kind = chip.dataset.kind || "singer";
+    const value = chip.dataset.value || "";
+    state[kind] = state[kind] === value ? "" : value;
     syncChips();
     apply();
   });
@@ -488,6 +494,8 @@ function setupFilters() {
     const clearBtn = e.target.closest("#clear-filters");
     if (clearBtn) {
       state.singer = "";
+      state.author = "";
+      state.series = "";
       state.keyword = "";
       input.value = "";
       syncChips();
