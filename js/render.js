@@ -259,9 +259,10 @@ const Render = {
    * aria-pressed 表达「当前选中」，读屏器能播报。
    */
   /**
-   * 首页筛选面板（2026-10-22 扩为三维）：虚拟歌姬 / 作者 / 系列曲。
+   * 首页筛选面板（2026-10-22 扩为三维）：虚拟歌姬 / UP主 / 系列曲。
+   * 2026-10-23：作者维度改为 UP主（用户反馈「主要看它们在哪个 up 主发的」）。
    * 每个维度一组 chip，组内单选（再点同项取消 = 该维度不限）；三个维度与关键词互相叠加。
-   * 维度名放在 state 的 singer / author / series（series 存系列 id，名字可能改、id 稳定）。
+   * 维度名放在 state 的 singer / uploader / series（series 存系列 id，名字可能改、id 稳定）。
    */
   filterPanel(state = {}) {
     const s = state || {};
@@ -289,11 +290,11 @@ const Render = {
             .join("")
         )}
         ${group(
-          "author",
-          "✍️",
-          "作者",
-          Store.getAuthors()
-            .map((x) => chip("author", x.name, x.name, s.author === x.name, x.count))
+          "uploader",
+          "📺",
+          "UP主",
+          Store.getUploaders()
+            .map((x) => chip("uploader", x.name, x.name, s.uploader === x.name, x.count))
             .join("")
         )}
         ${group(
@@ -315,7 +316,7 @@ const Render = {
     const s = state || {};
     const parts = [];
     if (s.singer) parts.push(`歌姬：${s.singer}`);
-    if (s.author) parts.push(`作者：${s.author}`);
+    if (s.uploader) parts.push(`UP主：${s.uploader}`);
     if (s.series) {
       const meta = SERIES.find((x) => x.id === s.series);
       parts.push(`系列：${meta ? meta.name : s.series}`);
@@ -370,7 +371,7 @@ const Render = {
 
   /**
    * 搜索结果列表（F4）：只重绘 #card-list，不整页刷新，输入框不丢焦点。
-   * 入参是筛选状态对象 { singer, author, series, keyword }（2026-10-22 起支持三维筛选）。
+   * 入参是筛选状态对象 { singer, uploader, series, keyword }（2026-10-23 起作者维度换成 UP主）。
    * 无匹配时显示空状态（PRD D4：不清屏、不报错），并写明当前筛选条件（Day 12）。
    */
   filteredList(state = {}) {
@@ -381,7 +382,7 @@ const Render = {
       const seriesMeta = s.series ? SERIES.find((x) => x.id === s.series) : null;
       const cond = [
         s.singer && `歌姬「${s.singer}」`,
-        s.author && `作者「${s.author}」`,
+        s.uploader && `UP主「${s.uploader}」`,
         s.series && `系列「${seriesMeta ? seriesMeta.name : s.series}」`,
         kw && `关键词「${kw}」`,
       ]

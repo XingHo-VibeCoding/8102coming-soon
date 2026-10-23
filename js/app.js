@@ -419,14 +419,14 @@ function setupFilters() {
   if (!input || !list || !bar) return;
 
   // 四个维度：虚拟歌姬 / 作者 / 系列曲 / 关键词，互相叠加（2026-10-22 起从单一歌手维度扩展）
-  const state = { singer: "", author: "", series: "", keyword: "" };
+  const state = { singer: "", uploader: "", series: "", keyword: "" };
   let wasActive = false; // 仅从「无筛选」切到「有筛选」时滚动一次，避免每次按键都跳
   // 筛选生效时把结果区搬到搜索框正下方（#home-content 首位），清空后搬回原位（末尾）。
   // 背景：结果区原本排在系列曲/推荐区之后、离搜索框数屏远，桌面端打字看不见变化。
   const homeContent = list.closest("#home-content");
   const section = list.closest(".all-songs-section");
 
-  const isActive = () => !!(state.singer || state.author || state.series || state.keyword);
+  const isActive = () => !!(state.singer || state.uploader || state.series || state.keyword);
 
   // 按 state 重画列表 + 条件条（不清输入框、不重绘按钮，焦点保住）
   const apply = () => {
@@ -494,7 +494,7 @@ function setupFilters() {
     const clearBtn = e.target.closest("#clear-filters");
     if (clearBtn) {
       state.singer = "";
-      state.author = "";
+      state.uploader = "";
       state.series = "";
       state.keyword = "";
       input.value = "";

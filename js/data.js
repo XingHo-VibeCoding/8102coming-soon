@@ -963,3 +963,43 @@ const SONGS = [
     myStory: "（待补——此处由站长亲自撰写，AI 不代写）",
   },
 ];
+
+// ---------- B站 UP主 映射（2026-10-22 新增，配合「按UP主筛选」） ----------
+// 键=歌曲 id，值=该曲 B站投稿视频的 UP主名（view API owner.name，2026-10-22 逐曲抓取）。
+// 放这里而非库里：纯展示维度，不需要动 Supabase 表结构；歌曲 id 稳定，云端/本地数据通用。
+// erzhong-biange（二重变革）原投稿已删、无 UP主可查，留空即不参与该维度。
+const UPLOADERS = {
+  "shimo-song": "COPY",
+  "xiafeng": "COPY",
+  "shimo-jiyuyun": "COPY",
+  "huiyin": "COPY",
+  "hello-bye-days": "COPY",
+  "liangyu": "COPY",
+  "suimeng": "COPY",
+  "nova": "DELA_P",
+  "yichong-jiahai": "DELA_P",
+  "sanzhong-ailian": "DELA_P",
+  "sizhong-zuinie": "DELA_P",
+  "wuzhong-kongdong": "DELA_P",
+  "liuzhong-buzhong": "DELA_P",
+  "qizhong-gubing": "DELA_P",
+  "bazhong-huigui": "DELA_P",
+  "jiuzhong-xianshi": "DELA_P",
+  "lingchong-qiyuan": "DELA_P",
+  "sanzhong-lianai": "OQQ_",
+  "linchong-qiyuan": "DELA_P",
+  "zigongzishou": "DELA_P",
+  "wangxiang-paranoia": "雨狸",
+  "wangxiang-reality": "DELA_P",
+  "shuangxiang-sinian": "JUSF周存",
+  "shuangxiang-kuayue": "JUSF周存",
+  "danxiang-xuanzhan": "JUSF周存",
+  "shuangxiang-xingfu": "JUSF周存",
+  "shuangxiang-jianjin": "JUSF周存",
+  "shuangxiang-yiwang": "JUSF周存",
+  "nixiang-shouhu": "JUSF周存",
+  "zhengxiang-qipian": "JUSF周存",
+  "danxiang-suxing": "JUSF周存",
+  "shuangxiang-qingsu": "JUSF周存",
+  "shichong-gaobie": "雨狸",
+};

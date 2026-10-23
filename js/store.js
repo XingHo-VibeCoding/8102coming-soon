@@ -222,9 +222,8 @@ const Store = {
   },
 
   /**
-   * 拆分 author 字段为作者名数组（2026-10-22 新增，配合「按作者筛选」）。
-   * 数据形如「JUSF周存（曲/词/编/调）· sya（绘/PV）」「DELA（曲）· 雨狸（词）」：
-   * 先去掉括号里的分工说明，再按 ·、,，/ 拆分，去空格去空值。
+   * 拆分 author 字段为作者名数组（去括号里的分工说明，再按 ·、,，/ 拆分）。
+   * 2026-10-23 起筛选维度改用 UP主（见 getUploaders），本函数保留给潜在文案用途。
    */
   splitAuthors(author) {
     return String(author || "")
@@ -234,13 +233,17 @@ const Store = {
       .filter(Boolean);
   },
 
-  /** 全部作者 + 各自歌曲数（按曲数降序），供首页筛选按钮使用 */
-  getAuthors() {
+  /**
+   * 全部 UP主 + 各自歌曲数（按曲数降序），供首页「按UP主筛选」使用。
+   * UP主映射在 data.js 的 UPLOADERS（键=歌曲 id，值=B站投稿视频的 UP主名，
+   * 2026-10-22 逐曲从 view API 抓取）；查不到映射的歌（无B站链接/视频已删）不参与该维度。
+   */
+  getUploaders() {
     const counts = new Map();
     Store.getAllSongs().forEach((song) => {
-      Store.splitAuthors(song.author).forEach((name) => {
-        counts.set(name, (counts.get(name) || 0) + 1);
-      });
+      const name = typeof UPLOADERS !== "undefined" ? UPLOADERS[song.id] : "";
+      if (!name) return;
+      counts.set(name, (counts.get(name) || 0) + 1);
     });
     return [...counts.entries()]
       .map(([name, count]) => ({ name, count }))
@@ -257,10 +260,12 @@ const Store = {
   },
 
   /**
-   * 筛选歌曲：虚拟歌姬 / 作者 / 系列 / 关键词，四者叠加生效（同时满足才留下）。
-   * 入参是对象 { singer, author, series, keyword }，任一项为空表示该维度不限。
+   * 筛选歌曲：虚拟歌姬 / UP主 / 系列 / 关键词，四者叠加生效（同时满足才留下）。
+   * 入参是对象 { singer, uploader, series, keyword }，任一项为空表示该维度不限。
    * 兼容旧写法 filterSongs(singer, keyword)（仍有老调用方）。
    * series 传系列 id（不是系列名），因为系列名可能改、id 稳定。
+   * uploader 2026-10-23 替代原 author 维度：用户反馈「不用什么作者都说，
+   * 主要它们在哪个 up 主发的就行了」——按 B站投稿视频的 UP主筛。
    */
   filterSongs(criteria, legacyKeyword) {
     const c =
@@ -268,15 +273,17 @@ const Store = {
         ? { singer: criteria, keyword: legacyKeyword }
         : criteria;
     const singer = String(c.singer || "").trim();
-    const author = String(c.author || "").trim();
+    const uploader = String(c.uploader || "").trim();
     const series = String(c.series || "").trim();
 
     let songs = Store.searchSongs(c.keyword);
     if (singer) {
       songs = songs.filter((song) => Store.splitSingers(song.singer).indexOf(singer) !== -1);
     }
-    if (author) {
-      songs = songs.filter((song) => Store.splitAuthors(song.author).indexOf(author) !== -1);
+    if (uploader) {
+      songs = songs.filter(
+        (song) => typeof UPLOADERS !== "undefined" && UPLOADERS[song.id] === uploader
+      );
     }
     if (series) {
       const meta = SERIES.find((s) => s.id === series);
