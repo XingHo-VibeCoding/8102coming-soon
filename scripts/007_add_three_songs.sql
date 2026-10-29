@@ -1,4 +1,6 @@
 -- 007_add_three_songs.sql（幂等，可重复执行）
+-- ⚠ 执行方式：用记事本 / VS Code 打开本文件 → Ctrl+A 全选 → Ctrl+C 复制「文件内容」，
+--   粘贴到 Supabase SQL Editor。不要粘贴这个文件名或路径（会报 syntax error at or near "scripts"）。
 -- 新增 3 首（2026-10-29 站长点名补录，均已核实B站官方投稿）：
 --   1) 《绝体绝命》BV1HW411T741（阿良良木健 2018-04-04，洛天依）→ 奇爱人生（LOVE SERIES）第三作
 --   2) 《不老不死》BV1w4411G7nv（阿良良木健 2019-06-18，洛天依）→ 异托邦 LOVETOPIA 第一作
